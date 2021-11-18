@@ -1,0 +1,823 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.23.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Automating OCI with Terraform - Oracle Dev.O Tutorials</title>
+<meta name="description" content="You want to know how you can automate tasks on OCI - here you can find a short deep dive into automation with Terraform">
+
+
+  <meta name="author" content="Malte Menkhoff">
+  
+  <meta property="article:author" content="Malte Menkhoff">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Oracle Dev.O Tutorials">
+<meta property="og:title" content="Automating OCI with Terraform">
+<meta property="og:url" content="https://cool.devo.build/tutorials/oci-iac-framework/getting-started-with-oci-step-1-provider">
+
+
+  <meta property="og:description" content="You want to know how you can automate tasks on OCI - here you can find a short deep dive into automation with Terraform">
+
+
+
+  <meta property="og:image" content="https://cool.devo.build/tutorials/oci-iac-framework/assets/landing-zone.png">
+
+
+
+
+  <meta name="twitter:site" content="@groundbreakers">
+  <meta name="twitter:title" content="Automating OCI with Terraform">
+  <meta name="twitter:description" content="You want to know how you can automate tasks on OCI - here you can find a short deep dive into automation with Terraform">
+  <meta name="twitter:url" content="https://cool.devo.build/tutorials/oci-iac-framework/getting-started-with-oci-step-1-provider">
+
+  
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:image" content="https://cool.devo.build/tutorials/oci-iac-framework/assets/landing-zone.png">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2021-10-29T08:00:00+00:00">
+
+
+
+
+
+
+<link rel="canonical" href="https://cool.devo.build/tutorials/oci-iac-framework/getting-started-with-oci-step-1-provider">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": null,
+      "url": "https://cool.devo.build/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/main.xml" type="application/atom+xml" rel="alternate" title="Oracle Dev.O Tutorials Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css"></noscript>
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+<link rel="icon" href="https://www.oracle.com/asset/web/favicons/favicon-32.png" sizes="32x32">
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead oracle-header oracle-headerv1 oracle-headeradj oracle-headerdev">
+  <div class="masthead__inner-wrap oracle-headerw1">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        <div class="oracle-headers1 site-logo">
+          <a class="oracle-logo" href="https://developer.oracle.com/"><span>Oracle</span></a>
+        </div>
+        <div class="u18-title site-title">
+          <a href="/">
+            Oracle Dev.O Tutorials
+            
+          </a>
+        </div>
+
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/use-cases/">Use Cases</a>
+            </li><li class="masthead__menu-item">
+              <a href="/topics/">Topics</a>
+            </li><li class="masthead__menu-item">
+            <a href="https://www.oracle.com/cloud/free/?source=:ow:o:s:nav::DevoGetStarted&intcmp=:ow:o:s:nav::DevoGetStarted">Get Started For Free</a>
+          </li>
+        </ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <i class="fas fa-search"></i>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      <a href="https://developer.oracle.com/" itemprop="item"><span itemprop="name">Developer Resource Center</span></a>
+      <meta itemprop="position" content="" />
+    </li>
+    <span class="sep">/</span>
+    
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/" itemprop="item"><span itemprop="name">Dev.O Tutorials</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/tutorials" itemprop="item"><span itemprop="name">Tutorials</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/tutorials/oci-iac-framework" itemprop="item"><span itemprop="name">Oci iac framework</span></a>
+          <meta itemprop="position" content="3" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Automating OCI with Terraform</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+
+    <div class="sidebar sticky">
+    <p><strong>Tags:</strong> <span class="tags">
+
+            
+            <a class="animated-link tag" href="/topics/open-source">open-source</a>
+            <a class="animated-link tag" href="/topics/terraform">terraform</a>
+            <a class="animated-link tag" href="/topics/iac">iac</a>
+            <a class="animated-link tag" href="/topics/devops">devops</a>
+            <a class="animated-link tag" href="/topics/beginner">beginner</a>
+            </span>
+    </p>
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Malte Menkhoff</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Malte is a passioned solution architect and is supporting customers in the DACH region in migrating to OCI.</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+
+      
+
+      
+
+      
+        <li>
+          <a href="mailto:malte.menkhoff@oracle.com">
+            <meta itemprop="email" content="malte.menkhoff@oracle.com" />
+            <i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+        <li>
+          <a href="https://github.com/kubemen" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  
+  
+  <p><strong>From this author:</strong>
+    <ul>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-intro">Getting Started with Oracle Cloud Infrastructure (OCI)</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-step-2-base">Service Delivery Framework</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-step-3-database-infrastructure">Database Infrastructure</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-step-4-app-infrastructure">Application Infrastructure</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-step-5-workload-deployment">Workload Deployment</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-step-6-governance">Governance</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/">Oracle Cloud Infrastructure IaC Framework</a></li>
+      
+    </ul>
+  
+  
+
+  </div>
+
+
+  <article class="page has-sidebar has-toc" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Automating OCI with Terraform">
+    
+    <meta itemprop="datePublished" content="2021-10-29T08:00:00+00:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Automating OCI with Terraform
+</h1>
+          
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
+              <ul class="toc__menu"><li><a href="#getting-started">Getting Started</a><ul><li><a href="#command-line-access">Command Line Access</a></li><li><a href="#hello-world">Hello World</a></li></ul></li><li><a href="#provider-configuration">Provider Configuration</a><ul><li><a href="#home-region">Home Region</a></li></ul></li><li><a href="#terraform-workflow">Terraform Workflow</a></li><li><a href="#state-management">State Management</a></li><li><a href="#output">Output</a></li></ul>
+
+            </nav>
+          </aside>
+        
+
+        <picture class="aligncenter">
+                <source srcset="assets/landing-zone.png 1x" />
+                <img loading="lazy" width="400" height="400" src="assets/landing-zone.png" data-original="assets/landing-zone.png" data-at2x="assets/landing-zone@2x.png" alt="OCLOUD landing zone" title="OCLOUD landing zone" />
+            </picture>
+
+<p>Introducing Oracle Cloud Infrastructure for service delivery allows operators to represent physical and virtual infrastructure in the form of code. System administrators ensure server uptime and service levels, responding to infrastructure monitoring alerts and resolving incidents programmatically. Adopting <a href="https://youtu.be/h970ZBgKINg">“Infrastructure as Code” (IaC)</a> helps operators to connect events and state changes with automated provisioning processes.</p>
+
+<p>While requesting a resource from a cloud provider is a matter of opening the console, providing input values, and launching the server, addressing functional and non-functional requirements of an IT operation during the launch process is more complex. Provisioning plans help to determine the correct framework, reflect the operational and management tools, and configure resources according to security and compliance regulations. In OCI, we rely on <a href="https://www.terraform.io/">Terraform</a> to automate provisioning processes. The widely-adopted, open-source tool allows engineers to translate “declarative” syntax written in <a href="https://www.terraform.io/docs/internals/json-format.html">JSON</a> or <a href="https://github.com/hashicorp/hcl">Hashicorp’s Configuration Language (HCL)</a> into API calls.</p>
+
+<h2 id="getting-started">Getting Started</h2>
+
+<p>Terraform is orchestrator agnostic. The execution environment is dynamically extended with <a href="https://www.terraform.io/docs/language/providers/configuration.html">hypervisor-specific interfaces</a> when needed.</p>
+
+<ul>
+  <li>Terraform templates comprise the physical infrastructure, network functions and orchestrators for distributed systems.</li>
+  <li>Topology templates comprise configuration scripts that intiate service deployments upon the successful creation of a resource.</li>
+  <li>Terraform’s <a href="https://www.terraform.io/docs/language/resources/provisioners/local-exec.html">local-exec</a> and <a href="https://www.terraform.io/docs/language/resources/provisioners/remote-exec.html">remote-exec</a> blocks run configuration scripts that install software components for service instances.</li>
+  <li>Operators combine application code and/or binaries with virtualization and an orchestration environment of their choice into comprehensive build plans.</li>
+</ul>
+
+<p>The process of provisioning infrastructure is merged with the continuous integration and deployment chain for application code. Combinging Terraform with OCI, enterprise IT departments benefit from:</p>
+
+<ul>
+  <li>
+    <p><strong>Increased flexibility and agility in operation</strong></p>
+
+    <p>Relying on automated deployment allows you to centralize topology management in code repositories. While Terraform is creating resources, state is maintained. This helps to prevent confusion among engineering teams. The desired state for all resources is compared to the current state and the delta defines the provisioning sequence for the requested changes.</p>
+
+    <p>This allows operators to launch virtual data center in more than 30 locations and rely on a single script source to maintain company-wide security and compliance standards.</p>
+  </li>
+  <li>
+    <p><strong>Integrated cloud services</strong></p>
+
+    <p>Database and application infrastructure is separated in OCI. The terraform service provider combines deployment scripts for database services with provisioning scripts for applications relying on open source orchestrators and commercial hypervisors like Kubernetes and VMWare vSphere.</p>
+
+    <p>Engineers merge cloud-native services and traditional enterprise applications into comprehensive deployment templates. Combining Oracle’s orchestrator-agnostic approach for the applications stack with separate infrastructure for multi-model databases on a native layer three network, service owners modernize existing applications incrementally and adopt cloud native services in digestable steps. Doing so, they avoid rewriting entire applications before migrating to a managed infrastrcuture stack.</p>
+  </li>
+  <li>
+    <p><strong>Shadow IT prevention</strong></p>
+
+    <p>Terraform separates code and execution environments and allows you to maintain security and cost-control while enabling self-service application deployments.</p>
+
+    <p>Defining resources in code allows you to define launch parameters and user credentials programmitically, take dependencies during the provisioning process into account, and define the sequence of resources that are deployed.</p>
+
+    <p>Engineers describe a target topology and terraform determines the steps required to create a resource automatically. Leveraging flags like the region argument, modules are exectuted in different regions and availability/security domains. This allows modules to be defined which represent services in a self-service portal, with admin expertise and configuration dependencies reflected in the predefined deployment process.</p>
+  </li>
+</ul>
+
+<!--EDIT-->
+
+<p>We refer to resources that are programmatically defined as [custom or logical resources][ref_logical]. The learning curve, adding to orchestrator-specific service provider to the OCI core services is not very steep, because syntax patterns that are used to code infrastructure on orchestrators remain the same.</p>
+
+<h3 id="command-line-access">Command Line Access</h3>
+
+<p>A fast way to start, is obtaining an Oracle Cloud Infrastructure account by <strong>signing up for the <a href="http://signup.oraclecloud.com/">Free Tier</a></strong>. Because Oracle assigns dedicated resources to every user, new registrations can be prevented by a lack of resources in a specific region. Select a different region for the registration usually helps to overcome the hurdle.</p>
+
+<picture class="aligncenter">
+                <source srcset="assets/cloud_shell.png 1x" />
+                <img loading="lazy" src="assets/cloud_shell.png" data-original="assets/cloud_shell.png" data-at2x="assets/cloud_shell@2x.png" alt="OCI Free Tier" title="OCI Free Tier" />
+            </picture>
+
+<table>
+  <tbody>
+    <tr>
+      <td>After obtaining an account we log into the web console and start the <a href="https://docs.cloud.oracle.com/en-us/iaas/Content/API/Concepts/cloudshellintro.htm">Cloud Shell</a> with</td>
+      <td><em>&gt;_</em></td>
+      <td>button. The cloud shell launches in the region that is active in the cloud console. For the initial setup the home region of a tenant should be selected. Executing deployment plans, Terraform depends on the directory structure to identify files that belong to a plan.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="go">mkdir ~/project
+</span></code></pre></div></div>
+
+<p>In the <em>project</em> directory we create a file with the name <code class="language-plaintext highlighter-rouge">hello.tf</code>.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd ~/project &amp;&amp; touch hello.tf
+</code></pre></div></div>
+
+<p>Terraform code is stored in a text file that ends with <em>.tf</em>. We open the file with an editor of choice. The cloud shell comes with <em>vim</em> and <em>nano</em> preinstalled.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>nano ~/project/hello.tf
+</code></pre></div></div>
+
+<h3 id="hello-world">Hello World</h3>
+
+<p>Terraform uses a configuration language called HashiCorp Configuration Language (HCL) for templates that characterize components of a topology. HCL is a decalrative lanuguage, instructions are stored in blocks, the synthax looks as follows.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;BLOCK TYPE&gt; "&lt;BLOCK project&gt;" {
+ &lt;IDENTIFIER&gt; = &lt;EXPRESSION&gt;
+}
+</code></pre></div></div>
+<p>Infrastructure components are defined, adopting an input-output model. [Input parameter][Input] are passed to a build plan, resources definitions describe the provision process and [output parameters][Output] return the results.</p>
+
+<picture class="aligncenter">
+                <source srcset="assets/iomodel.png 1x" />
+                <img loading="lazy" src="assets/iomodel.png" data-original="assets/iomodel.png" data-at2x="assets/iomodel@2x.png" alt="HCL Syntax" title="HCL Syntax" />
+            </picture>
+
+<p>This principle can be explained using a simple “Hello World” example. First we define an input variable. The input block, contains type constraints as arguments for interpretation. Simple <a href="https://www.terraform.io/docs/language/expressions/types.html">types</a> are <code class="language-plaintext highlighter-rouge">string</code>, <code class="language-plaintext highlighter-rouge">number</code> and <code class="language-plaintext highlighter-rouge">bool</code>, complex types are <code class="language-plaintext highlighter-rouge">list</code> and <code class="language-plaintext highlighter-rouge">object</code>. The resource block remains empty for now, because we do not aim to provision any resources. The output block returns the execution results. Referring to an output variable instructs Terraform to execute the referenced block, the sequence inside the code is actaully not relevant.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Input
+variable "input" {
+  type        = string
+  default     = "Hello World"
+}
+
+# Function
+resource "null_resource" "nothing" {}
+
+# Output
+output "greeting" { value = var.input }
+</code></pre></div></div>
+
+<p>HCL scripts do not include a shebang, we need to call terraform explicitely. We store the file as <code class="language-plaintext highlighter-rouge">~/project/hello.tf</code> and run the terraform command. Before executing terraform, we need to initalize the working directory.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd ~/project &amp;&amp; terraform init
+</code></pre></div></div>
+
+<p>The command allows for additional subcommands, using the format *terraform <subcommand> -options*. The *-auto-approve* option forces terraform to execute the command without further confirmation.</subcommand></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform apply -auto-approve
+</code></pre></div></div>
+
+<p>The command only returns with an output of the variable.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>greeting = Hello World
+</code></pre></div></div>
+
+<p>After this example, the <code class="language-plaintext highlighter-rouge">~/project/hello.tf</code> is no longer needed.</p>
+
+<h2 id="provider-configuration">Provider Configuration</h2>
+
+<p>In order to create resources in OCI we need to configure terraform. We create a basic configuration file.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rm ~/project/hello.tf &amp;&amp; nano ~/project/config.tf
+
+</code></pre></div></div>
+
+<p>The first block is the <a href="https://www.terraform.io/docs/language/providers/configuration.html">provider block</a>, we load the latest service provider. A [service provider][oci_terraform] is a plugin for the provisioning API, it translates <a href="https://github.com/terraform-providers/terraform-provider-oci">HCL code into API calls</a>. The API conituously evolves, adding a the provider block enforces terraform to load the latest version before exectuing any scripts. In the cloud shell, an empty block is suffcient, because the necessary arguments are stored as default parameter.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Setup the oci service provider
+provider "oci" { }
+</code></pre></div></div>
+
+<p>Next, we instruct terraform to address a specific account, referring to the <a href="https://docs.oracle.com/en-us/iaas/Content/GSG/Concepts/settinguptenancy.htm">Oracle Cloud Ressource Indentifier (OCID)</a>. We define the tenancy_ocid as empty input parameter and retrieve the OCID from the command line.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Input parameter to request the unique identifier for an account
+variable "tenancy_ocid" { }
+</code></pre></div></div>
+
+<p>With that, the communication is established and we can use the cloud controller as data source. A <a href="https://www.terraform.io/docs/configuration/data-sources.html">data block</a> sends a request to the controller and retruns <a href="https://registry.terraform.io/providers/hashicorp/oci/latest/docs/data-sources/identity_tenancy">account specific information</a> in JSON format.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Retrieve meta data for tenant
+data "oci_identity_tenancy" "account" {
+  tenancy_id = var.tenancy_ocid
+}
+</code></pre></div></div>
+
+<p>We define the result as parameter print the result to the console defining an output block.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Output tenancy details
+output "tenancy" {
+  value = data.oci_identity_tenancy.account
+}
+</code></pre></div></div>
+
+<p>Now, we close the file test the integration with <code class="language-plaintext highlighter-rouge">plan</code> command.  Because we left the input variable for the tenancy ID empty, we need to refer to a environment setting. The unix command [printenv][linux_printenv] unveils the respective environment variable.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>printenv | grep TENANCY
+</code></pre></div></div>
+
+<p>With the <code class="language-plaintext highlighter-rouge">-var</code> argument we provide the expected input, running terraform.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd ~/project &amp;&amp; terraform init &amp;&amp; terraform plan -var tenancy_ocid=$OCI_TENANCY
+</code></pre></div></div>
+
+<h3 id="home-region">Home Region</h3>
+
+<p>OCI is available in multiple regions, every region represents one or more a physcal data center. Multi-data-center regions like FRA, PHX, IAD and LHR are managed as one resource pool with multiple availability domains (AD). All regions are managed through a single API, which makes global service roll-outs simple. We target a specific region, using the region argument inside a block. In the console, the active region is showen in the upper right corner, and in the cloud shell the command prompt shows the active region.</p>
+
+<p><img src="https://docs.cloud.oracle.com/en-us/iaas/Content/Resources/Images/cloud-shell-region-location-prompt.png" alt="Cloud Shell" title="OCI Console" /></p>
+
+<p>Some resources like compartments are defined once and replicated into every region, we call these global resources. These resources should be created in the [“home” region][blog_home]. We use the <em>locals block</em> to define a function that determines the <a href="https://docs.cloud.oracle.com/en-us/iaas/Content/Identity/Tasks/managingregions.htm">home region</a> for a tenant.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Create a region map
+locals {
+  region_map = {
+    for city in data.oci_identity_regions.global.regions :
+    city.key =&gt; city.name
+  }
+  home_region = lookup(
+    local.region_map,
+    data.oci_identity_tenancy.account.home_region_key
+  )
+}
+</code></pre></div></div>
+
+<p><a href="https://docs.cloud.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm">Region identifier</a> in OCI are provided either in a long format that includes the AD, like <em>eu-frankfurt-1</em> or as simple three letter key, like <em>FRA</em>. Even though HCL is a templating language, <a href="https://www.terraform.io/docs/language/expressions/index.html">expressions</a> allow to use <a href="https://www.terraform.io/docs/language/expressions/for.html">scripts</a> as primitives. We use this functionality in a <a href="https://www.terraform.io/docs/configuration/locals.html">local block</a> to construct the right input format.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Get the list of regions
+data "oci_identity_regions" "global" { }
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">oci_identity_tenancy</code> block in setting.tf delivers the home-region key that we match with the long format in <a href="https://www.oracle.com/cloud/architecture-and-regions.html">map</a> that contains all OCI regions. The map is retrieved “global” data block. The result is an identifier we can use as argument in the provider block.</p>
+
+<h2 id="terraform-workflow">Terraform Workflow</h2>
+
+<p>Executing a build plan is reflected in a sequence of terraform commands to validates block definitions, to quantify and to provision the required resources. The steps in the Terraform workflow are closely related to the lifecycle of resources on cloud platforms. These steps are orchestrator-agnostic, the commands are valid to create, update, and destroy resources on any given orchestrator.</p>
+
+<picture class="aligncenter">
+                <source srcset="assets/workflow.png 1x" />
+                <img loading="lazy" src="assets/workflow.png" data-original="assets/workflow.png" data-at2x="assets/workflow@2x.png" alt="Initial Command Sequence" title="Initial Command Sequence" />
+            </picture>
+
+<p>Before executing terraform commands, we validate the HCL and JSON syntax. <code class="language-plaintext highlighter-rouge">Terraform validate</code> is a parser that checks the synthax structure for obvious errors.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform validate
+</code></pre></div></div>
+
+<p>When the code is error free, we run the <code class="language-plaintext highlighter-rouge">init</code> command that instructs terraform to check and load the referenced service provider plug-ins from the <a href="https://www.terraform.io/docs/language/providers/configuration.html">provider registry</a> and store the plugin in the <code class="language-plaintext highlighter-rouge">.terraform</code> sub directory. Third party service provider can be added by defining additional provider blocks.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform init
+</code></pre></div></div>
+
+<p>After that we run a plan command to check the list of resource changes before executing a deployment plan. The plan command indicates which resources will be created, updated or deleted in order to adjust the current architecture to match the desired architecture. The <code class="language-plaintext highlighter-rouge">-out config.tfplan</code> extension instructs terraform to store the excution plan for a later apply.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform plan -var tenancy_ocid=$OCI_TENANCY -out config.tfplan
+</code></pre></div></div>
+
+<p>The apply command executes the script. We are not provisioning any resources yet and use the -auto-approve flag to skip the explicit confirmation.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform apply "config.tfplan" -auto-approve
+</code></pre></div></div>
+
+<p>Executing the script instructs Terraform to provision the required resources and to return the output varaibles in the shell. Once confirmed, it takes a few seconds to complete the creation of the resources on OCI. The completion of the command is indicated with the output messages.</p>
+
+<h2 id="state-management">State Management</h2>
+
+<p>Terraform is a state-aware deployment tool, it generates a file with the <code class="language-plaintext highlighter-rouge">apply</code> command that reflects the deployment status. The state file allows operators to track the current state of their resources. State information is maintained in syntax similar to JSON. The file is located in a hidden folder <strong>.terraform/terraform.tfstate</strong>. Editing the state file directly is not recommended.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cat ~/training/terraform.tfstate
+</code></pre></div></div>
+
+<p>This file captures terraform the results of every deployment process. State awareness sets Terraform apart from most configuration management systems used for cloud deployments, because it allows for “declarative” deployments. The admin only defines the desired architecture in the build plan and when terrafrom is executed, the programm automatically determines the difference between the as-is- and to-be architecture and deploys or destroys the required resources.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># Terraform.tfstate file example
+
+{
+    "version": 3,
+    "terraform_version": "0.11.8",
+    "lineage": "35a9fcf6-c658-3697-9d74-480408535ce6",
+    "modules": [
+            {
+                    "path": ["root"],
+                    ……………………………………
+                    "depends_on": []
+            }
+    ]&amp;
+}
+</code></pre></div></div>
+<p>Terraform provides a commands for operators to review the current state, <code class="language-plaintext highlighter-rouge">terraform show</code>. The <em>show</em> command retrieves all information captured in the state file. the <code class="language-plaintext highlighter-rouge">-json</code> option transfers the data into a valid <a href="https://www.terraform.io/docs/internals/json-format.html">json format</a> .</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform show -json
+</code></pre></div></div>
+
+<p>With a JSON parser like <a href="https://stedolan.github.io/jq/">jq</a> we can filter infrastrucutre information for further use. In case of an error, the [json validator][json_valid] allowss to check the json structure and the <a href="https://jqplay.org/">jq playground</a> to develop the filter syntax before applying it.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform show -json | jq .values.outputs.tenancy.value.home_region_key -r
+</code></pre></div></div>
+
+<p>This example shows how to use jq to filter the home region of your tenant from json output. It returns the three letter value, e.g. <em>FRA</em> for the home region.</p>
+
+<h2 id="output">Output</h2>
+
+<p>With <code class="language-plaintext highlighter-rouge">terraform output</code> will retrieve the definied output parameter from the state file. Adding the name of a particular block, the response and returns only the data of a specific block.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform output home
+</code></pre></div></div>
+
+<p>We can use the this command to ananlyse an existing tenancy from the command line. E.g. resources can only be deployed in regions that have been activated by the account owner. One option is to leverage the <a href="https://docs.oracle.com/en-us/iaas/tools/oci-cli/latest/oci_cli_docs/">OCI command line interface</a> to retrieve a list of regions have already been activated.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>oci iam region-subscription list --query 'data[*]'
+</code></pre></div></div>
+
+<p>Terraform allows operators to use the same API but provide a list in <a href="https://www.terraform.io/docs/internals/json-format.html">JSON</a> format. We create a small module in a subdirectory. This modules creates a JSON output containing all regions that a tenancy has subscribed to.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mkdir ~/project/subscriptions &amp;&amp; nano ~/project/subscriptions/region.tf
+</code></pre></div></div>
+
+<p>The method <code class="language-plaintext highlighter-rouge">oci_identity_region_subscriptions</code> retrieves the list of activated regions form the service provider. With the output block we reformat the list into a list of provider arguments.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>variable "tenancy_ocid" { }
+
+output "subscriptions" {
+  value = [
+     for subscription in data.oci_identity_region_subscriptions.activated.region_subscriptions:{
+        "alias" = subscription.region_key
+        "region"  = subscription.region_name
+     }
+  ]
+}
+
+data "oci_identity_region_subscriptions" "activated" { tenancy_id = var.tenancy_ocid }
+</code></pre></div></div>
+
+<p>After an initial <em>apply</em>, we use the <code class="language-plaintext highlighter-rouge">terraform output -json</code> command and parse the list with [jq][ref_jq] to crteate a terraform input file, in this example a list of regional provider. We use a bash command to transfer the result into <code class="language-plaintext highlighter-rouge">~/project/provider.tf.json</code> file.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>terraform output -json | jq '[{provider: {oci: .providers.value[]}}]' &gt; p &amp;&amp; mv ./p ../provider.tf.json
+</code></pre></div></div>
+
+<p>Next up, the <a href="getting-started-with-oci-step-2-base">Service Delivery Framework</a>.</p>
+
+<!--- Links -->
+
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2021-10-29T08:00:00+00:00">October 29, 2021</time></p>
+
+
+      </footer>
+
+      
+
+      
+
+    </div>
+
+    
+  </article>
+
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+
+    
+
+    
+      <li><a href="/main.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Oracle</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="/assets/js/custom.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+  
+    <script src="/assets/js/plugins/readmore.min.js"></script>
+  
+
+
+<!-- Start SiteCatalyst code -->
+<script>
+  var s_pageName = "devrel:en-us:";
+  if (typeof(document.title) != "undefined") {
+    var s_pageName = s_pageName + document.title.trim()
+  };
+</script>
+<script src="https://www.oracleimg.com/us/assets/metrics/ora_otn.js"></script>
+<!-- End SiteCatalyst code -->
+
+
+  </body>
+</html>

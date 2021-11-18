@@ -1,0 +1,633 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.23.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Database Infrastructure - Oracle Dev.O Tutorials</title>
+<meta name="description" content="How to deploy database infrastructure on top of the OCLOUD framework">
+
+
+  <meta name="author" content="Malte Menkhoff">
+  
+  <meta property="article:author" content="Malte Menkhoff">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Oracle Dev.O Tutorials">
+<meta property="og:title" content="Database Infrastructure">
+<meta property="og:url" content="https://cool.devo.build/tutorials/oci-iac-framework/getting-started-with-oci-step-3-database-infrastructure">
+
+
+  <meta property="og:description" content="How to deploy database infrastructure on top of the OCLOUD framework">
+
+
+
+  <meta property="og:image" content="https://cool.devo.build/tutorials/oci-iac-framework/assets/landing-zone.png">
+
+
+
+
+  <meta name="twitter:site" content="@groundbreakers">
+  <meta name="twitter:title" content="Database Infrastructure">
+  <meta name="twitter:description" content="How to deploy database infrastructure on top of the OCLOUD framework">
+  <meta name="twitter:url" content="https://cool.devo.build/tutorials/oci-iac-framework/getting-started-with-oci-step-3-database-infrastructure">
+
+  
+    
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:image" content="https://cool.devo.build/tutorials/oci-iac-framework/assets/landing-zone.png">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2021-11-12T12:00:00+00:00">
+
+
+
+
+
+
+<link rel="canonical" href="https://cool.devo.build/tutorials/oci-iac-framework/getting-started-with-oci-step-3-database-infrastructure">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": null,
+      "url": "https://cool.devo.build/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/main.xml" type="application/atom+xml" rel="alternate" title="Oracle Dev.O Tutorials Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css"></noscript>
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+<link rel="icon" href="https://www.oracle.com/asset/web/favicons/favicon-32.png" sizes="32x32">
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead oracle-header oracle-headerv1 oracle-headeradj oracle-headerdev">
+  <div class="masthead__inner-wrap oracle-headerw1">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        <div class="oracle-headers1 site-logo">
+          <a class="oracle-logo" href="https://developer.oracle.com/"><span>Oracle</span></a>
+        </div>
+        <div class="u18-title site-title">
+          <a href="/">
+            Oracle Dev.O Tutorials
+            
+          </a>
+        </div>
+
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/use-cases/">Use Cases</a>
+            </li><li class="masthead__menu-item">
+              <a href="/topics/">Topics</a>
+            </li><li class="masthead__menu-item">
+            <a href="https://www.oracle.com/cloud/free/?source=:ow:o:s:nav::DevoGetStarted&intcmp=:ow:o:s:nav::DevoGetStarted">Get Started For Free</a>
+          </li>
+        </ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <i class="fas fa-search"></i>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      <a href="https://developer.oracle.com/" itemprop="item"><span itemprop="name">Developer Resource Center</span></a>
+      <meta itemprop="position" content="" />
+    </li>
+    <span class="sep">/</span>
+    
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/" itemprop="item"><span itemprop="name">Dev.O Tutorials</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/tutorials" itemprop="item"><span itemprop="name">Tutorials</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/tutorials/oci-iac-framework" itemprop="item"><span itemprop="name">Oci iac framework</span></a>
+          <meta itemprop="position" content="3" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Database Infrastructure</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+
+    <div class="sidebar sticky">
+    <p><strong>Tags:</strong> <span class="tags">
+
+            
+            <a class="animated-link tag" href="/topics/open-source">open-source</a>
+            <a class="animated-link tag" href="/topics/terraform">terraform</a>
+            <a class="animated-link tag" href="/topics/iac">iac</a>
+            <a class="animated-link tag" href="/topics/devops">devops</a>
+            <a class="animated-link tag" href="/topics/beginner">beginner</a>
+            </span>
+    </p>
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Malte Menkhoff</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Malte is a passioned solution architect and is supporting customers in the DACH region in migrating to OCI.</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+
+      
+
+      
+
+      
+        <li>
+          <a href="mailto:malte.menkhoff@oracle.com">
+            <meta itemprop="email" content="malte.menkhoff@oracle.com" />
+            <i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+        <li>
+          <a href="https://github.com/kubemen" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  
+  
+  <p><strong>From this author:</strong>
+    <ul>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-intro">Getting Started with Oracle Cloud Infrastructure (OCI)</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-step-1-provider">Automating OCI with Terraform</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-step-2-base">Service Delivery Framework</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-step-4-app-infrastructure">Application Infrastructure</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-step-5-workload-deployment">Workload Deployment</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/getting-started-with-oci-step-6-governance">Governance</a></li>
+      
+        <li><a href="/tutorials/oci-iac-framework/">Oracle Cloud Infrastructure IaC Framework</a></li>
+      
+    </ul>
+  
+  
+
+  </div>
+
+
+  <article class="page has-sidebar has-toc" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Database Infrastructure">
+    
+    <meta itemprop="datePublished" content="2021-11-12T12:00:00+00:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Database Infrastructure
+</h1>
+          
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
+              <ul class="toc__menu"><li><a href="#autonomous-database---shared">Autonomous Database - Shared</a><ul><li><a href="#workload-types">Workload Types</a></li><li><a href="#prerequistes">Prerequistes</a></li><li><a href="#mandatory-steps">Mandatory Steps</a></li><li><a href="#optional-steps">Optional Steps</a></li><li><a href="#advanced-parameter">Advanced Parameter</a></li><li><a href="#output">Output</a></li><li><a href="#usage">Usage</a></li><li><a href="#validate">Validate</a></li><li><a href="#addional-resources">Addional Resources</a></li></ul></li></ul>
+
+            </nav>
+          </aside>
+        
+
+        <picture class="aligncenter">
+                <source srcset="assets/landing-zone.png 1x" />
+                <img loading="lazy" width="400" height="400" src="assets/landing-zone.png" data-original="assets/landing-zone.png" data-at2x="assets/landing-zone@2x.png" alt="OCLOUD landing zone" title="OCLOUD landing zone" />
+            </picture>
+
+<h1 id="autonomous-database---shared">Autonomous Database - Shared</h1>
+
+<p>Oracle Cloud Infrastructure’s Autonomous Database is a fully managed, preconfigured database environment with four workload types available:</p>
+
+<ul>
+  <li>Autonomous Transaction Processing</li>
+  <li>Autonomous Data Warehouse</li>
+  <li>Oracle APEX Application Development</li>
+  <li>Autonomous JSON Database</li>
+</ul>
+
+<p>You don’t need to configure or manage any hardware or install any software. After provisioning, you can scale the number of CPU cores or storage capacity of the database at any time without impacting availability or performance. Autonomous Database handles creating the database, and the following maintenance tasks:</p>
+
+<ul>
+  <li>Backing up the database</li>
+  <li>Patching the database</li>
+  <li>Upgrading the database</li>
+  <li>Tuning the database</li>
+</ul>
+
+<h2 id="workload-types">Workload Types</h2>
+
+<p><strong>DWH</strong>: Built for decision support and data warehouse workloads. Offers fast queries over large volumes of data.</p>
+
+<p><strong>JSON</strong>: Built for JSON-centric application development. Offers developer-friendly document APIs and native JSON storage. Note that Autonomous JSON Database is Oracle Autonomous Transaction Processing, but specialized for developing NoSQL-style applications that use JavaScript Object Notation (JSON) documents.</p>
+
+<p><strong>ATP</strong>: Built for transactional workloads. Offers high concurrency for short-running queries and transactions.</p>
+
+<p><strong>APEX</strong>: Optimized for application developers, who want a transaction processing database for application development using Oracle APEX, that enables creation and deployment of low-code applications, including databases.</p>
+
+<p>This module enables you to quickly equip your tenancy with a <a href="https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier.htm">Oracle Cloud Infrastructure Free Tier</a> instance of a <a href="https://docs.oracle.com/en-us/iaas/Content/Database/Concepts/adboverview.htm">Autonoumous Data - Shared</a> .</p>
+
+<h2 id="prerequistes">Prerequistes</h2>
+
+<p>In case of a ADB with private endpoints, deploy a Landing Zone whose VCN is used to create a private subnet.</p>
+
+<h2 id="mandatory-steps">Mandatory Steps</h2>
+
+<ol>
+  <li>Create DB <strong>Compartment</strong></li>
+  <li>Create Database <strong>User Groups</strong></li>
+  <li>Create <strong>Policies</strong></li>
+  <li>Create ADB
+    <ol>
+      <li>Select <strong>VCN</strong></li>
+      <li>Enter <strong>Compartment Name</strong>, defaults to …</li>
+      <li>Enter <strong>Database Name</strong>, defaults to ….</li>
+      <li>Select <strong>Workload Type</strong>, defaults to DWH</li>
+      <li>Enter <strong>Admin Password</strong></li>
+      <li>Select <strong>Database Version</strong>, defaults to 19c</li>
+      <li>Enter <strong>Free Form Tags</strong></li>
+    </ol>
+  </li>
+</ol>
+
+<h2 id="optional-steps">Optional Steps</h2>
+
+<ol>
+  <li>Select <strong>Private Endpoint</strong> Option</li>
+  <li>Create <strong>Private Subnet</strong></li>
+  <li>Create <strong>Network Security Group</strong></li>
+  <li>Enter Database <strong>Display Name</strong>, defaults to …</li>
+</ol>
+
+<h2 id="advanced-parameter">Advanced Parameter</h2>
+
+<ol>
+  <li>cpu_core_count</li>
+  <li>are_primary_whitelisted_ips_used</li>
+  <li>is_auto_scaling_enabled</li>
+  <li>is_data_guard_enabled</li>
+  <li>kms_key_id</li>
+  <li>license_model</li>
+  <li>data_safe_status</li>
+  <li>data_storage_size_in_tbs</li>
+  <li>vault_id</li>
+  <li>whitelisted_ips</li>
+  <li>is_free_tier</li>
+  <li>defined_tags</li>
+</ol>
+
+<h2 id="output">Output</h2>
+
+<ol>
+  <li>all_connection_strings</li>
+  <li>connection_urls</li>
+</ol>
+
+<h2 id="usage">Usage</h2>
+
+<ol>
+  <li>Login to your tenancy</li>
+  <li>Go to Resource Manager</li>
+  <li>Create a stack</li>
+  <li>upload zip files</li>
+  <li>Plan stack</li>
+  <li>Apply stack</li>
+</ol>
+
+<h2 id="validate">Validate</h2>
+
+<ol>
+  <li>Access database</li>
+  <li>(Optional) Access APEX</li>
+</ol>
+
+<h2 id="addional-resources">Addional Resources</h2>
+
+<table>
+  <tbody>
+    <tr>
+      <td><a href="getting-started-with-oci-step-2-base">&lt; base</a></td>
+      <td><a href="index">+</a></td>
+      <td><a href="getting-started-with-oci-step-4-app-infrastructure">app-infra &gt;</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!--- Links -->
+
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2021-11-12T12:00:00+00:00">November 12, 2021</time></p>
+
+
+      </footer>
+
+      
+
+      
+
+    </div>
+
+    
+  </article>
+
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+
+    
+
+    
+      <li><a href="/main.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Oracle</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="/assets/js/custom.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+  
+    <script src="/assets/js/plugins/readmore.min.js"></script>
+  
+
+
+<!-- Start SiteCatalyst code -->
+<script>
+  var s_pageName = "devrel:en-us:";
+  if (typeof(document.title) != "undefined") {
+    var s_pageName = s_pageName + document.title.trim()
+  };
+</script>
+<script src="https://www.oracleimg.com/us/assets/metrics/ora_otn.js"></script>
+<!-- End SiteCatalyst code -->
+
+
+  </body>
+</html>

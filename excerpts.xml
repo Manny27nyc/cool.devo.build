@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" >
+  <generator uri="https://jekyllrb.com/" version="4.2.1">Jekyll</generator>
+  <link href="https://cool.devo.build/excerpts.xml" rel="self" type="application/atom+xml" />
+  <link href="https://cool.devo.build/" rel="alternate" type="text/html" />
+  <updated>2021-11-18T19:30:50+00:00</updated>
+  <id>https://cool.devo.build/excerpts.xml</id>
+    <title type="html">Oracle Dev.O Tutorials</title>
+    <subtitle>Cool stuff from Oracle's Developer Relations team</subtitle>
+    <author>
+        <name>Oracle Developer Community</name>
+    </author>
+    <entry>
+      <title type="html">GoLang–Consuming Oracle REST API from an Oracle Cloud Database</title>
+      <link href="https://cool.devo.build/tutorials/go%E2%80%93consuming-oracle-rest-api" rel="alternate" type="text/html" title="GoLang–Consuming Oracle REST API from an Oracle Cloud Database" />
+      <published>2021-11-18T19:42:00+00:00</published>
+      <updated>2021-11-18T19:42:00+00:00</updated>
+      <id>https://cool.devo.build/tutorials/go%E2%80%93consuming-oracle-rest-api</id>
+      <content type="html" xml:base="https://cool.devo.build/tutorials/go%E2%80%93consuming-oracle-rest-api">&lt;p&gt;Brendan Tierney shares a method to call an in-database machine learning model and then process the data it returns using GoLang.&lt;/p&gt;</content>
+      <author>
+          <name>Brendan Tierney</name>
+      </author>
+      <category term="ai-ml" />
+      <category term="oci" />
+      <category term="go" />
+      <category term="back-end" />
+      <category term="machine-learning" />
+      <summary type="html">Brendan Tierney shares a method to call an in-database machine learning model and then process the data it returns using GoLang.</summary>
+    </entry>
+    <entry>
+      <title type="html">How to import data from Microsoft SQL Server to MySQL Database Service</title>
+      <link href="https://cool.devo.build/tutorials/microsoft-sql-to-mds" rel="alternate" type="text/html" title="How to import data from Microsoft SQL Server to MySQL Database Service" />
+      <published>2021-11-18T12:11:00+00:00</published>
+      <updated>2021-11-18T12:11:00+00:00</updated>
+      <id>https://cool.devo.build/tutorials/microsoft-sql-to-mds</id>
+      <content type="html" xml:base="https://cool.devo.build/tutorials/microsoft-sql-to-mds">&lt;p&gt;This tutorial walks you through the process for exporting data from Microsoft SQL Server and then importing it into MySQL Database Service in OCI.&lt;/p&gt;</content>
+      <author>
+          <name>Frédéric Descamps</name>
+      </author>
+      <category term="modernize" />
+      <category term="mySQL" />
+      <category term="analytics" />
+      <category term="back-end" />
+      <summary type="html">This tutorial walks you through the process for exporting data from Microsoft SQL Server and then importing it into MySQL Database Service in OCI.</summary>
+    </entry>
+    <entry>
+      <title type="html">Use Matomo Website Analytics on OCI with MDS</title>
+      <link href="https://cool.devo.build/tutorials/matamo-with-oci-mds" rel="alternate" type="text/html" title="Use Matomo Website Analytics on OCI with MDS" />
+      <published>2021-11-18T11:11:00+00:00</published>
+      <updated>2021-11-18T11:11:00+00:00</updated>
+      <id>https://cool.devo.build/tutorials/matamo-with-oci-mds</id>
+      <content type="html" xml:base="https://cool.devo.build/tutorials/matamo-with-oci-mds">&lt;p&gt;Matamo, an alternative to Google Analytics, is becoming increasingly popular. This walkthrough shows you how to use this powerful tool with MySQL Database Service and Oracle Cloud Infrastructure.&lt;/p&gt;</content>
+      <author>
+          <name>Frédéric Descamps</name>
+      </author>
+      <category term="modernize" />
+      <category term="mysql" />
+      <category term="analytics" />
+      <category term="backend" />
+      <summary type="html">Matamo, an alternative to Google Analytics, is becoming increasingly popular. This walkthrough shows you how to use this powerful tool with MySQL Database Service and Oracle Cloud Infrastructure.</summary>
+    </entry>
+    <entry>
+      <title type="html">Get Started with the Feature Store HopsWorks (LogicalClocks) on Oracle Cloud</title>
+      <link href="https://cool.devo.build/tutorials/hops-works-logicalclocks" rel="alternate" type="text/html" title="Get Started with the Feature Store HopsWorks (LogicalClocks) on Oracle Cloud" />
+      <published>2021-11-18T09:45:00+00:00</published>
+      <updated>2021-11-18T09:45:00+00:00</updated>
+      <id>https://cool.devo.build/tutorials/hops-works-logicalclocks</id>
+      <content type="html" xml:base="https://cool.devo.build/tutorials/hops-works-logicalclocks">&lt;p&gt;This walk-through will guide you through setting up your environment to run HopsWorks with OCI.&lt;/p&gt;</content>
+      <author>
+          <name>Olivier Francois Xavier Perard</name>
+      </author>
+      <category term="cloudapps" />
+      <category term="feature-store" />
+      <category term="open-source" />
+      <category term="machine-learning" />
+      <summary type="html">This walk-through will guide you through setting up your environment to run HopsWorks with OCI.</summary>
+    </entry>
+    <entry>
+      <title type="html">Installation Guide for OCI Monitoring</title>
+      <link href="https://cool.devo.build/tutorials/ocimonitoring-w-steampipe-prometheus-grafana" rel="alternate" type="text/html" title="Installation Guide for OCI Monitoring" />
+      <published>2021-11-18T09:42:00+00:00</published>
+      <updated>2021-11-18T09:42:00+00:00</updated>
+      <id>https://cool.devo.build/tutorials/ocimonitoring-w-steampipe-prometheus-grafana</id>
+      <content type="html" xml:base="https://cool.devo.build/tutorials/ocimonitoring-w-steampipe-prometheus-grafana">&lt;p&gt;This tutorial walks you through configuring a basic OCI monitoring solution with components based on Ansible in Oracle Linux 8.&lt;/p&gt;</content>
+      <author>
+          <name>Martin Berger</name>
+      </author>
+      <category term="modernize" />
+      <category term="ansible" />
+      <category term="data-visualization" />
+      <category term="data-management" />
+      <summary type="html">This tutorial walks you through configuring a basic OCI monitoring solution with components based on Ansible in Oracle Linux 8.</summary>
+    </entry>
+    <entry>
+      <title type="html">Deploying Verrazzano on Oracle Container Engine for Kubernetes (OKE)</title>
+      <link href="https://cool.devo.build/tutorials/deploying-verrazzano-on-oke" rel="alternate" type="text/html" title="Deploying Verrazzano on Oracle Container Engine for Kubernetes (OKE)" />
+      <published>2021-11-12T09:11:00+00:00</published>
+      <updated>2021-11-12T09:11:00+00:00</updated>
+      <id>https://cool.devo.build/tutorials/deploying-verrazzano-on-oke</id>
+      <content type="html" xml:base="https://cool.devo.build/tutorials/deploying-verrazzano-on-oke">&lt;p&gt;How to deploy Verrazzano an OKE cluster.&lt;/p&gt;</content>
+      <author>
+          <name>Ali Mukadam</name>
+      </author>
+      <category term="cloudapps" />
+      <category term="opensource" />
+      <category term="open-source" />
+      <category term="oke" />
+      <category term="kubernetes" />
+      <category term="terraform" />
+      <category term="devops" />
+      <summary type="html">How to deploy Verrazzano an OKE cluster.</summary>
+    </entry>
+    <entry>
+      <title type="html">Creating flexible OCI Load Balancers with OKE</title>
+      <link href="https://cool.devo.build/tutorials/flexible-load-balancers-oke" rel="alternate" type="text/html" title="Creating flexible OCI Load Balancers with OKE" />
+      <published>2021-11-02T16:17:00+00:00</published>
+      <updated>2021-11-02T16:17:00+00:00</updated>
+      <id>https://cool.devo.build/tutorials/flexible-load-balancers-oke</id>
+      <content type="html" xml:base="https://cool.devo.build/tutorials/flexible-load-balancers-oke">&lt;p&gt;New load balancer shapes mean more options to optimize your configuration. Ali walks you through how to create these shapes using OKE.&lt;/p&gt;</content>
+      <author>
+          <name>Ali Mukadam</name>
+      </author>
+      <category term="clouddev" />
+      <category term="kubernetes" />
+      <summary type="html">New load balancer shapes mean more options to optimize your configuration. Ali walks you through how to create these shapes using OKE.</summary>
+    </entry>
+    <entry>
+      <title type="html">More Terraform Resources</title>
+      <link href="https://cool.devo.build/tutorials/tf-101/8-resources" rel="alternate" type="text/html" title="More Terraform Resources" />
+      <published>2021-11-01T09:02:00+00:00</published>
+      <updated>2021-11-01T09:02:00+00:00</updated>
+      <id>https://cool.devo.build/tutorials/tf-101/8-resources</id>
+      <content type="html" xml:base="https://cool.devo.build/tutorials/tf-101/8-resources">&lt;p&gt;A curated list of helpful resources for expanding your knowledge of Terraform.&lt;/p&gt;</content>
+      <author>
+          <name>Tim Clegg</name>
+      </author>
+      <category term="iac" />
+      <category term="opensource" />
+      <category term="open-source" />
+      <category term="terraform" />
+      <category term="iac" />
+      <category term="devops" />
+      <category term="beginner" />
+      <summary type="html">A curated list of helpful resources for expanding your knowledge of Terraform.</summary>
+    </entry>
+    <entry>
+      <title type="html">Destroying resources with Terraform</title>
+      <link href="https://cool.devo.build/tutorials/tf-101/7-destroying" rel="alternate" type="text/html" title="Destroying resources with Terraform" />
+      <published>2021-11-01T08:02:00+00:00</published>
+      <updated>2021-11-01T08:02:00+00:00</updated>
+      <id>https://cool.devo.build/tutorials/tf-101/7-destroying</id>
+      <content type="html" xml:base="https://cool.devo.build/tutorials/tf-101/7-destroying">&lt;p&gt;How to keep things neat and tidy with Terraform.&lt;/p&gt;</content>
+      <author>
+          <name>Tim Clegg</name>
+      </author>
+      <category term="iac" />
+      <category term="opensource" />
+      <category term="open-source" />
+      <category term="terraform" />
+      <category term="iac" />
+      <category term="devops" />
+      <category term="beginner" />
+      <summary type="html">How to keep things neat and tidy with Terraform.</summary>
+    </entry>
+    <entry>
+      <title type="html">Polyglot Application Observability</title>
+      <link href="https://cool.devo.build/tutorials/polyglot-application-observability" rel="alternate" type="text/html" title="Polyglot Application Observability" />
+      <published>2021-10-31T11:33:00+00:00</published>
+      <updated>2021-10-31T11:33:00+00:00</updated>
+      <id>https://cool.devo.build/tutorials/polyglot-application-observability</id>
+      <content type="html" xml:base="https://cool.devo.build/tutorials/polyglot-application-observability">&lt;p&gt;Use GraalVM to leverage the PinPoint service, which allows tracing transactions and data flows between multiple software components and identifies problematic areas along with potential bottlenecks.&lt;/p&gt;</content>
+      <author>
+          <name>Amitpal Singh Dhillon</name>
+      </author>
+      <category term="clouddev" />
+      <category term="pinpoint" />
+      <category term="graalvm" />
+      <category term="observability" />
+      <summary type="html">Use GraalVM to leverage the PinPoint service, which allows tracing transactions and data flows between multiple software components and identifies problematic areas along with potential bottlenecks.</summary>
+    </entry>
+</feed>

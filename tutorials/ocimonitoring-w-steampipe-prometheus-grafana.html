@@ -1,0 +1,840 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.23.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Installation Guide for OCI Monitoring - Oracle Dev.O Tutorials</title>
+<meta name="description" content="This tutorial walks you through configuring a basic OCI monitoring solution with components based on Ansible in Oracle Linux 8.">
+
+
+  <meta name="author" content="Martin Berger">
+  
+  <meta property="article:author" content="Martin Berger">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Oracle Dev.O Tutorials">
+<meta property="og:title" content="Installation Guide for OCI Monitoring">
+<meta property="og:url" content="https://cool.devo.build/tutorials/ocimonitoring-w-steampipe-prometheus-grafana">
+
+
+  <meta property="og:description" content="This tutorial walks you through configuring a basic OCI monitoring solution with components based on Ansible in Oracle Linux 8.">
+
+
+
+  <meta property="og:image" content="https://cool.devo.build/tutorials/">
+
+
+
+
+  <meta name="twitter:site" content="@groundbreakers">
+  <meta name="twitter:title" content="Installation Guide for OCI Monitoring">
+  <meta name="twitter:description" content="This tutorial walks you through configuring a basic OCI monitoring solution with components based on Ansible in Oracle Linux 8.">
+  <meta name="twitter:url" content="https://cool.devo.build/tutorials/ocimonitoring-w-steampipe-prometheus-grafana">
+
+  
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://cool.devo.build/assets/site-logo.png">
+    
+  
+
+  
+
+
+
+  <meta property="article:published_time" content="2021-11-18T09:42:00+00:00">
+
+
+
+
+
+
+<link rel="canonical" href="https://cool.devo.build/tutorials/ocimonitoring-w-steampipe-prometheus-grafana">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": null,
+      "url": "https://cool.devo.build/"
+    
+  }
+</script>
+
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/main.xml" type="application/atom+xml" rel="alternate" title="Oracle Dev.O Tutorials Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css"></noscript>
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+<link rel="icon" href="https://www.oracle.com/asset/web/favicons/favicon-32.png" sizes="32x32">
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use https://realfavicongenerator.net/ -->
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead oracle-header oracle-headerv1 oracle-headeradj oracle-headerdev">
+  <div class="masthead__inner-wrap oracle-headerw1">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        <div class="oracle-headers1 site-logo">
+          <a class="oracle-logo" href="https://developer.oracle.com/"><span>Oracle</span></a>
+        </div>
+        <div class="u18-title site-title">
+          <a href="/">
+            Oracle Dev.O Tutorials
+            
+          </a>
+        </div>
+
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/use-cases/">Use Cases</a>
+            </li><li class="masthead__menu-item">
+              <a href="/topics/">Topics</a>
+            </li><li class="masthead__menu-item">
+            <a href="https://www.oracle.com/cloud/free/?source=:ow:o:s:nav::DevoGetStarted&intcmp=:ow:o:s:nav::DevoGetStarted">Get Started For Free</a>
+          </li>
+        </ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <i class="fas fa-search"></i>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+  
+    
+
+
+
+<nav class="breadcrumbs">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      <a href="https://developer.oracle.com/" itemprop="item"><span itemprop="name">Developer Resource Center</span></a>
+      <meta itemprop="position" content="" />
+    </li>
+    <span class="sep">/</span>
+    
+    
+    
+    
+      
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/" itemprop="item"><span itemprop="name">Dev.O Tutorials</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <span class="sep">/</span>
+      
+      
+        
+        
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a href="/tutorials" itemprop="item"><span itemprop="name">Tutorials</span></a>
+          <meta itemprop="position" content="2" />
+        </li>
+        <span class="sep">/</span>
+      
+    
+      
+      
+        <li class="current">Installation Guide for OCI Monitoring</li>
+      
+    
+  </ol>
+</nav>
+
+  
+
+
+<div id="main" role="main">
+
+    <div class="sidebar sticky">
+    <p><strong>Tags:</strong> <span class="tags">
+
+            
+            <a class="animated-link tag" href="/topics/ansible">ansible</a>
+            <a class="animated-link tag" href="/topics/data-visualization">data-visualization</a>
+            <a class="animated-link tag" href="/topics/data-management">data-management</a>
+            </span>
+    </p>
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Martin Berger</h3>
+    
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+        <li>
+          <a href="https://github.com/martinberger-ch" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  
+  
+  
+
+  </div>
+
+
+  <article class="page has-sidebar has-toc" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Installation Guide for OCI Monitoring">
+    
+    <meta itemprop="datePublished" content="2021-11-18T09:42:00+00:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">Installation Guide for OCI Monitoring
+</h1>
+          
+
+
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+          <aside class="sidebar__right sticky">
+            <nav class="toc">
+              <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
+              <ul class="toc__menu"><li><a href="#an-installation-guide-for-oci-monitoring">An Installation Guide for OCI Monitoring</a><ul><li><a href="#links">Links</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#prerequisites">Prerequisites</a><ul><li><a href="#software-installation-ol8-esxi--ol8-vmware">Software Installation OL8 ESXi / OL8 VMware</a></li><li><a href="#software-installation-ol8-oracle-cloud-infrastructure">Software Installation OL8 Oracle Cloud Infrastructure</a></li><li><a href="#ansible-ssh-configuration-for-oracle-cloud-infrastructure">Ansible SSH Configuration for Oracle Cloud Infrastructure</a></li></ul></li><li><a href="#steps">Steps</a><ul><li><a href="#network-security">Network Security</a></li></ul></li><li><a href="#oci-configuration">OCI Configuration</a></li><li><a href="#how-to-create-the-user-for-oci-access---based-on-oci-cli">How to create the user for OCI access - based on OCI CLI</a><ul><li><a href="#create-user">Create User</a></li><li><a href="#create-group">Create Group</a></li><li><a href="#add-user-to-group">Add User to Group</a></li><li><a href="#create-policy">Create Policy</a></li><li><a href="#add-api-key">Add API Key</a></li></ul></li><li><a href="#steampipe">Steampipe</a><ul><li><a href="#oci-regions">OCI Regions</a></li></ul></li><li><a href="#python-example-scripts">Python Example Scripts</a></li><li><a href="#prometheus-push-gateway">Prometheus Push Gateway</a></li><li><a href="#grafana">Grafana</a></li><li><a href="#troubleshooting">Troubleshooting</a><ul><li><a href="#docker-logs">Docker Logs</a></li><li><a href="#steampipe-access-logs">Steampipe Access Logs</a></li></ul></li></ul></li></ul>
+
+            </nav>
+          </aside>
+        
+
+        
+<h1 id="an-installation-guide-for-oci-monitoring">An Installation Guide for OCI Monitoring</h1>
+
+<blockquote class="notice">
+  <p><strong>Note:</strong> This is an experimental environment. Feel free to try it out, extend it, and have fun with it!</p>
+</blockquote>
+
+<p>In this walkthrough you’ll install a basic OCI monitoring solution with these components based on Ansible in Oracle Linux 8. The setup is tested for:</p>
+
+<ul>
+  <li>OL8 running in ESXi</li>
+  <li>OL8 running in local VMware Workstation with NAT</li>
+  <li>OL8 running in Oracle Cloud Infrastructure</li>
+</ul>
+
+<p>Installed components by Ansible roles:</p>
+
+<ul>
+  <li>Docker</li>
+  <li>Steampipe</li>
+  <li>Grafana</li>
+  <li>Prometheus</li>
+  <li>Push Gateway</li>
+  <li>PostgreSQL</li>
+</ul>
+
+<h2 id="links">Links</h2>
+
+<ul>
+  <li><a href="https://steampipe.io/">Steampipe</a></li>
+  <li><a href="https://prometheus.io/">Prometheus</a></li>
+  <li><a href="https://grafana.com/">Grafana</a></li>
+  <li><a href="https://docs.oracle.com/en-us/iaas/Content/API/Concepts/cliconcepts.htm">OCI CLI</a></li>
+</ul>
+
+<h2 id="how-it-works">How it works</h2>
+
+<figure class="">
+              <picture>
+                  <source srcset="assets/oci-monitoring-architecture.png 1x" />
+                  <img loading="lazy" src="assets/oci-monitoring-architecture.png" data-original="assets/oci-monitoring-architecture.png" data-at2x="assets/oci-monitoring-architecture@2x.png" title="Architecture" alt="Architecture Overview" />
+              </picture>
+              <figcaption>Architecture</figcaption>
+            </figure>
+
+<ol>
+  <li>Execute the Python script</li>
+  <li>Steampipe gathers the information from Oracle Cloud Infrastructure</li>
+  <li>The return value is pushed to Prometheus Push Gateway</li>
+  <li>Prometheus scrapes the metrics from the gateway</li>
+  <li>Grafana reads the metrics from Prometheus</li>
+</ol>
+
+<h2 id="prerequisites">Prerequisites</h2>
+
+<ul>
+  <li>root access by password</li>
+  <li><code class="language-plaintext highlighter-rouge">/etc/hosts</code> configured</li>
+  <li>Ansible and Git configured</li>
+  <li>Internet access</li>
+  <li>Oracle Cloud Infrastructure user with inspect permissions, including SSH PEM key and configuration</li>
+</ul>
+
+<h3 id="software-installation-ol8-esxi--ol8-vmware">Software Installation OL8 ESXi / OL8 VMware</h3>
+
+<p>As user <code class="language-plaintext highlighter-rouge">root</code>:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>yum <span class="nt">-y</span> <span class="nb">install </span>yum-utils
+<span class="gp">$</span><span class="w"> </span>yum <span class="nt">-y</span> <span class="nb">install </span>oracle-epel-release-el8
+<span class="gp">$</span><span class="w"> </span>yum-config-manager <span class="nt">--enable</span> ol8_developer_EPEL
+<span class="gp">$</span><span class="w"> </span>yum <span class="nt">-y</span> <span class="nb">install </span>ansible git
+</code></pre></div></div>
+
+<h3 id="software-installation-ol8-oracle-cloud-infrastructure">Software Installation OL8 Oracle Cloud Infrastructure</h3>
+
+<p>As user <code class="language-plaintext highlighter-rouge">opc</code>:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span><span class="nb">sudo </span>dnf upgrade
+<span class="gp">$</span><span class="w"> </span><span class="nb">sudo </span>dnf <span class="nt">-y</span> <span class="nb">install </span>oracle-epel-release-el8
+<span class="gp">$</span><span class="w"> </span><span class="nb">sudo </span>dnf config-manager <span class="nt">--enable</span> ol8_developer_EPEL
+<span class="gp">$</span><span class="w"> </span><span class="nb">sudo </span>dnf <span class="nt">-y</span> <span class="nb">install </span>ansible git
+</code></pre></div></div>
+
+<h3 id="ansible-ssh-configuration-for-oracle-cloud-infrastructure">Ansible SSH Configuration for Oracle Cloud Infrastructure</h3>
+
+<ul>
+  <li>Upload the <code class="language-plaintext highlighter-rouge">opc</code>’s SSH private key to <code class="language-plaintext highlighter-rouge">/home/opc/.ssh</code> temporarily for installaton purposes</li>
+  <li>
+    <p>Change the Ansible checked out hosts file to:</p>
+
+    <div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="go">  [all:vars]
+</span><span class="gp">  ansible_ssh_private_key_file=/home/opc/.ssh/&lt;your_ssh_key_file_name_here&gt;</span><span class="w">
+</span><span class="go">
+  [monitoring]
+</span><span class="gp">  &lt;your_oci_compute_private_instance_here&gt;</span><span class="w"> </span><span class="nv">ansible_user</span><span class="o">=</span>opc <span class="nv">ansible_python_interpreter</span><span class="o">=</span><span class="s2">"/usr/bin/env python3"</span>
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<blockquote class="alert">
+  <p>After the installation, it’s a good practice to remove the opc private key from your compute instance</p>
+</blockquote>
+
+<h2 id="steps">Steps</h2>
+
+<ol>
+  <li>Login to Oracle Linux 8 as <code class="language-plaintext highlighter-rouge">root</code></li>
+  <li>Clone the repository to a local folder such as <code class="language-plaintext highlighter-rouge">/root/git</code></li>
+  <li>Change to subdirectory <code class="language-plaintext highlighter-rouge">oci-monitoring</code></li>
+  <li>Update the Ansible <code class="language-plaintext highlighter-rouge">hosts</code> file with your IP and root password. <code class="language-plaintext highlighter-rouge">ansible_ssh_pass</code> is required for local connections</li>
+  <li>Run <code class="language-plaintext highlighter-rouge">ansible-galaxy collection install -r roles/requirements.yml</code></li>
+  <li>Run <code class="language-plaintext highlighter-rouge">ansible-playbook install.yml</code></li>
+</ol>
+
+<p>As <code class="language-plaintext highlighter-rouge">root</code>, verify that all Docker containers are running:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>docker ps
+<span class="go">CONTAINER ID   IMAGE              COMMAND                  CREATED             STATUS             PORTS                    NAMES
+</span><span class="gp">f7f2e137f4a1   prom/pushgateway   "/bin/pushgateway"       About an hour ago   Up About an hour   0.0.0.0:9091-&gt;</span>9091/tcp   pushgateway
+<span class="gp">c6ecc72065c9   prom/prometheus    "/bin/prometheus --c…"   About an hour ago   Up About an hour   0.0.0.0:9090-&gt;</span>9090/tcp   prometheus
+<span class="gp">3485de8cc1f9   grafana/grafana    "/run.sh"                About an hour ago   Up About an hour   0.0.0.0:3000-&gt;</span>3000/tcp   grafana
+<span class="gp">8e821aa0044b   turbot/steampipe   "docker-entrypoint.s…"   About an hour ago   Up 30 minutes      0.0.0.0:9193-&gt;</span>9193/tcp   steampipe
+</code></pre></div></div>
+
+<h3 id="network-security">Network Security</h3>
+
+<p>The Ansible playbooks also open these ports in the VM for troubleshooting access:</p>
+
+<ul>
+  <li>3000 - Grafana</li>
+  <li>9090 - Prometheus</li>
+  <li>9091 - Prometheus Push Gateway</li>
+  <li>9093 - Steampipe Service</li>
+</ul>
+
+<h2 id="oci-configuration">OCI Configuration</h2>
+
+<ul>
+  <li>After the successful Ansible execution, put your personal OCI configuration and SSH key into the directory <code class="language-plaintext highlighter-rouge">/home/steampipe/.oci</code></li>
+  <li>Replace the dummy values</li>
+  <li>Update the file <code class="language-plaintext highlighter-rouge">/home/steampipe/config/oci.spc</code> with the correct SSH key file name</li>
+</ul>
+
+<blockquote class="notice">
+  <p>Take care that owner and group of the OCI configuration file is <code class="language-plaintext highlighter-rouge">steampipe</code></p>
+</blockquote>
+
+<p>Example:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span><span class="nb">pwd</span>
+<span class="go">/home/steampipe/.oci
+
+</span><span class="gp">$</span><span class="w"> </span><span class="nb">ls</span> <span class="nt">-l</span>
+<span class="go">total 8
+-rw-r--r--. 1 steampipe steampipe  307 Aug  9 09:01 config
+-rw-r--r--. 1 steampipe steampipe 1730 Aug  9 09:01 jurasuedfuss-20210809.pem
+</span></code></pre></div></div>
+
+<p>Restart the Docker container for Steampipe:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>docker stop steampipe
+<span class="gp">$</span><span class="w"> </span>docker start steampipe
+</code></pre></div></div>
+
+<h2 id="how-to-create-the-user-for-oci-access---based-on-oci-cli">How to create the user for OCI access - based on OCI CLI</h2>
+
+<p>Next we create an OCI user for monitoring. An existing OCI CLI setup for an tenant administrator is required to execute these steps. The required SSH key in PEM format can be downloaded from the OCI web interface. The user, group, and policy can be created in web interface as well.</p>
+
+<p>All we need for Steampipe is the OCI config file for the new user and their SSH key in PEM format.</p>
+
+<h3 id="create-user">Create User</h3>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>oci iam user create <span class="nt">--name</span> oci_user_readonly <span class="nt">--description</span> <span class="s2">"OCI User with inspect all-resources."</span>
+</code></pre></div></div>
+
+<h3 id="create-group">Create Group</h3>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>oci iam group create <span class="nt">--name</span> oci_group_readonly <span class="nt">--description</span> <span class="s2">"OCI Group with inspect all-resources."</span>
+</code></pre></div></div>
+
+<h3 id="add-user-to-group">Add User to Group</h3>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>oci iam group add-user <span class="se">\</span>
+<span class="nt">--user-id</span> &lt;your user OCID from created user above&gt; <span class="se">\</span>
+<span class="nt">--group-id</span> &lt;your group OCID from created group above&gt;
+</code></pre></div></div>
+
+<h3 id="create-policy">Create Policy</h3>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>oci iam policy create <span class="se">\</span>
+<span class="nt">--compartment-id</span> &lt;your tenancy OCID&gt; <span class="se">\</span>
+<span class="nt">--name</span> oci_policy_readonly <span class="se">\</span>
+<span class="nt">--description</span> <span class="s2">"OCI Policy with inspect all-resources."</span> <span class="se">\</span>
+<span class="nt">--statements</span> <span class="s1">'[ "allow group oci_group_readonly to inspect all-resources on tenancy" ]'</span>
+</code></pre></div></div>
+
+<h3 id="add-api-key">Add API Key</h3>
+
+<ol>
+  <li>
+    <p>Add your API key</p>
+
+    <picture class="">
+             <source srcset="assets/oci-monitoring-api-key.png 1x" />
+             <img loading="lazy" src="assets/oci-monitoring-api-key.png" data-original="assets/oci-monitoring-api-key.png" data-at2x="assets/oci-monitoring-api-key@2x.png" alt="OCI API Key 01" title="OCI API Key 01" />
+         </picture>
+  </li>
+  <li>
+    <p>Download the created private key in PEM format</p>
+
+    <picture class="">
+             <source srcset="assets/oci-monitoring-add-api-key.png 1x" />
+             <img loading="lazy" src="assets/oci-monitoring-add-api-key.png" data-original="assets/oci-monitoring-add-api-key.png" data-at2x="assets/oci-monitoring-add-api-key@2x.png" alt="OCI API Key 02" title="OCI API Key 02" />
+         </picture>
+  </li>
+  <li>
+    <p>Copy the configuration file preview. The values are used for the Steampipe OCI configuration</p>
+
+    <picture class="">
+             <source srcset="assets/oci-monitoring-config-file-prev.png 1x" />
+             <img loading="lazy" src="assets/oci-monitoring-config-file-prev.png" data-original="assets/oci-monitoring-config-file-prev.png" data-at2x="assets/oci-monitoring-config-file-prev@2x.png" alt="OCI API Key 03" title="OCI API Key 03" />
+         </picture>
+  </li>
+</ol>
+
+<h2 id="steampipe">Steampipe</h2>
+
+<h3 id="oci-regions">OCI Regions</h3>
+
+<p>To filter your regions, just edit the file <code class="language-plaintext highlighter-rouge">/home/steampipe/config/oci.spc</code>.</p>
+
+<p>For example:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>connection "oci_tenant_kestenholz" {
+  plugin                = "oci"
+  config_file_profile   = "DEFAULT"          # Name of the profile
+  config_path           = "~/.oci/config"    # Path to config file
+  regions               = ["eu-frankfurt-1" , "eu-zurich-1"] # List of regions
+}
+</code></pre></div></div>
+
+<p>Here are some commands to verify if Steampipe is working as expected. Execute as <code class="language-plaintext highlighter-rouge">root</code>:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>docker <span class="nb">exec</span> <span class="nt">-it</span> steampipe steampipe plugin list
+<span class="go">+--------------------------------------------+---------+-----------------------+
+| Name                                       | Version | Connections           |
++--------------------------------------------+---------+-----------------------+
+| hub.steampipe.io/plugins/turbot/oci@latest | 0.1.0   | oci_tenant_kestenholz |
++--------------------------------------------+---------+-----------------------+
+</span></code></pre></div></div>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>docker <span class="nb">exec</span> <span class="nt">-it</span> steampipe steampipe <span class="se">\</span>
+query <span class="s2">"select display_name,shape,region from oci_core_instance where lifecycle_state='RUNNING';"</span>
+<span class="go">+-----------------------------------+------------------------+----------------+
+| display_name                      | shape                  | region         |
++-----------------------------------+------------------------+----------------+
+| Instance-DB-1                     | VM.Standard1.2         | eu-frankfurt-1 |
+| Instance-AS-1                     | VM.Standard1.1         | eu-frankfurt-1 |
++-----------------------------------+------------------------+----------------+
+</span></code></pre></div></div>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>docker <span class="nb">exec</span> <span class="nt">-it</span> steampipe steampipe <span class="se">\</span>
+query <span class="s2">"select key,title,status from oci_region where is_home_region=true;"</span>
+<span class="go">+-----+----------------+--------+
+| key | title          | status |
++-----+----------------+--------+
+| FRA | eu-frankfurt-1 | READY  |
++-----+----------------+--------+
+</span></code></pre></div></div>
+
+<h2 id="python-example-scripts">Python Example Scripts</h2>
+
+<p>In the subdirectory <code class="language-plaintext highlighter-rouge">/home/steampipe/py</code>, there are two basic examples of how to get the data from the Steampipe PostgreSQL service to Python3. Feel free to adapt the queries and files. Returned values are pushed to the Prometheus Gateway on port 9091 for further usage.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Script</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>pgsql-query-bv-zurich.py</td>
+      <td>Summary of Block Volume in OCI Region Zurich</td>
+    </tr>
+    <tr>
+      <td>pgsql-query-ci-running-zurich.py</td>
+      <td>Summary of running Instances in OCI Region Zurich</td>
+    </tr>
+  </tbody>
+</table>
+
+<blockquote class="alert">
+  <p>Note: You’ll need to restart the Docker container before executing Python3 according this error. This is something I’m working on!</p>
+</blockquote>
+
+<p>Manual execution and upload of the query result:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>python3 pgsql-query-ci-running-zurich.py
+<span class="gp">$</span><span class="w"> </span>python3 pgsql-query-bv-zurich.py
+</code></pre></div></div>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="go">Something went wrong: no connection config loaded for connection 'oci'
+</span></code></pre></div></div>
+
+<p>Restarting Steampipe as <code class="language-plaintext highlighter-rouge">root</code>:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>docker stop steampipe
+<span class="gp">$</span><span class="w"> </span>docker start steampipe
+</code></pre></div></div>
+
+<h2 id="prometheus-push-gateway">Prometheus Push Gateway</h2>
+
+<p>According to the Python script, new data is loaded in Prometheus Push Gateway to port 9091 and scraped by Prometheus port 9090.</p>
+
+<p>Checkout this example for the Protheus Gateway where data is loaded by jobs <code class="language-plaintext highlighter-rouge">oci_blockvolume_ / _oci_compute</code>.</p>
+
+<picture class="">
+                <source srcset="assets/oci-monitoring-pushgateway.png 1x" />
+                <img loading="lazy" src="assets/oci-monitoring-pushgateway.png" data-original="assets/oci-monitoring-pushgateway.png" data-at2x="assets/oci-monitoring-pushgateway@2x.png" alt="OCI Prometheus Push Gateway 01" title="OCI Prometheus Push Gateway 01" />
+            </picture>
+
+<h2 id="grafana">Grafana</h2>
+
+<p>Grafana is reachable by address <code class="language-plaintext highlighter-rouge">your-machine-ip:3000</code>.</p>
+
+<ul>
+  <li>Username: <code class="language-plaintext highlighter-rouge">admin</code></li>
+  <li>Password: <code class="language-plaintext highlighter-rouge">welcome1</code></li>
+</ul>
+
+<p>The Prometheus data source and a basic dashboard are deployed during the Grafana Docker setup process. Here’s an example for dasboard <strong>OCI Demo - eu-zurich-1</strong>:</p>
+
+<figure class="">
+              <picture>
+                  <source srcset="assets/oci-monitoring-grafana.png 1x" />
+                  <img loading="lazy" src="assets/oci-monitoring-grafana.png" data-original="assets/oci-monitoring-grafana.png" data-at2x="assets/oci-monitoring-grafana@2x.png" title="Prometheus data source" alt="Prometheus data source" />
+              </picture>
+              <figcaption>Prometheus data source</figcaption>
+            </figure>
+
+<figure class="">
+              <picture>
+                  <source srcset="assets/oci-monitoring-grafana-demo.png 1x" />
+                  <img loading="lazy" src="assets/oci-monitoring-grafana-demo.png" data-original="assets/oci-monitoring-grafana-demo.png" data-at2x="assets/oci-monitoring-grafana-demo@2x.png" title="Sample dashboard OCI Demo" alt="Sample dashboard OCI Demo" />
+              </picture>
+              <figcaption>Sample dashboard OCI Demo</figcaption>
+            </figure>
+
+<p>Here you can see the pushed metric from the Python script by name:</p>
+
+<picture class="">
+                <source srcset="assets/oci-monitoring-grafana-metrics-browser.png 1x" />
+                <img loading="lazy" src="assets/oci-monitoring-grafana-metrics-browser.png" data-original="assets/oci-monitoring-grafana-metrics-browser.png" data-at2x="assets/oci-monitoring-grafana-metrics-browser@2x.png" alt="Metric from Python script" title="Metric from Python script" />
+            </picture>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="docker-logs">Docker Logs</h3>
+
+<p>To verify that Steampipe is running properly:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gp">$</span><span class="w"> </span>docker logs steampipe
+</code></pre></div></div>
+
+<h3 id="steampipe-access-logs">Steampipe Access Logs</h3>
+
+<p>The foreign data wrapper logs are stored locally — not in the Docker container — in the directory <code class="language-plaintext highlighter-rouge">/home/steampipe/logs</code>:</p>
+
+<div class="language-console highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="go">drwx------. 11 steampipe steampipe     173 Aug  9 17:18 ..
+-rw-------.  1      9193 root       756701 Aug  9 19:57 database-2021-08-09.log
+drwxrwxr-x.  2 steampipe root           68 Aug 10 02:00 .
+-rw-------.  1      9193 root      3411203 Aug 10 07:19 database-2021-08-10.log
+</span></code></pre></div></div>
+
+
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2021-11-18T09:42:00+00:00">November 18, 2021</time></p>
+
+
+      </footer>
+
+      
+
+      
+
+    </div>
+
+    
+  </article>
+
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+
+    
+
+    
+      <li><a href="/main.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2021 Oracle</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="/assets/js/custom.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+
+
+  
+    <script src="/assets/js/plugins/readmore.min.js"></script>
+  
+
+
+<!-- Start SiteCatalyst code -->
+<script>
+  var s_pageName = "devrel:en-us:";
+  if (typeof(document.title) != "undefined") {
+    var s_pageName = s_pageName + document.title.trim()
+  };
+</script>
+<script src="https://www.oracleimg.com/us/assets/metrics/ora_otn.js"></script>
+<!-- End SiteCatalyst code -->
+
+
+  </body>
+</html>

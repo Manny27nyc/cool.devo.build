@@ -1,0 +1,1692 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.1">Jekyll</generator><link href="https://cool.devo.build/tutorials.xml" rel="self" type="application/atom+xml" /><link href="https://cool.devo.build/" rel="alternate" type="text/html" /><updated>2021-11-18T19:30:50+00:00</updated><id>https://cool.devo.build/tutorials.xml</id><title type="html">Oracle Dev.O Tutorials | Pages</title><subtitle>Cool stuff from Oracle's Developer Relations team</subtitle><author><name>Oracle Developer Community</name></author><entry><title type="html">GoLang–Consuming Oracle REST API from an Oracle Cloud Database</title><link href="https://cool.devo.build/tutorials/go%E2%80%93consuming-oracle-rest-api" rel="alternate" type="text/html" title="GoLang–Consuming Oracle REST API from an Oracle Cloud Database" /><published>2021-11-18T19:42:00+00:00</published><updated>2021-11-18T19:42:00+00:00</updated><id>https://cool.devo.build/</id><content type="html" xml:base="https://cool.devo.build/tutorials/go%E2%80%93consuming-oracle-rest-api">&lt;p&gt;Does anyone write code to access data in a database anymore (and by code I mean SQL)?  The answer to this question is “it depends,” just like everything in IT.&lt;/p&gt;
+
+&lt;p&gt;Using REST APIs is very common for accessing and processing data with a database. For things like using an API to retrieve data, using a slightly different API to insert data, or using other typical REST functions to perform your typical CRUD operations, REST APIs allow developers to focus on writing efficient applications in a particular application instead of having to swap between their programming language and SQL.&lt;/p&gt;
+
+&lt;p&gt;In the latter cases, most developers are not experts with SQL and don’t necessarily know how to work efficiently with the data. Therefore, leave the SQL and procedural coding to those who are good at that, and then expose the data and their code using REST APIs. The end result is efficient SQL and database coding, in addition to efficient application coding. This is a win-win for everyone.&lt;/p&gt;
+
+&lt;p&gt;I’ve written before about creating REST APIs in an Oracle Cloud Database (DBaaS and Autonomous). In these writings I’ve shown how to use the in-database machine learning features, and how to use REST APIs to create an interface to machine learning models. These models can be used to score new data to make a machine learning prediction. The data being used for the prediction doesn’t have to exist in the database — instead, the database is being used as a machine learning scoring engine, accessed using a REST API.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://blogs.oracle.com/oraclemagazine/post/rest-enabling-oracle-machine-learning-models&quot;&gt;Check out an article I wrote about this and creating a REST API for an in-database machine learning model, for Oracle Magazine.&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;In that article, I showed how easy it was to use the in-database machine model using Python.&lt;/p&gt;
+
+&lt;p&gt;Python has a huge fan and user base, but it can underperform as it’s an interrupted language. Don’t get me wrong — lots of work has gone into making Python more efficient. But in some scenarios, it just isn’t fast enough. In some scenarios, people will switch to languages which execute quicker, such as C, C++, Java, and GoLang.&lt;/p&gt;
+
+&lt;p&gt;Here is the GoLang code to call the in-database machine learning model and process the returned data.&lt;/p&gt;
+
+&lt;div class=&quot;language-go highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;&quot;bytes&quot;&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;&quot;encoding/json&quot;&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;&quot;fmt&quot;&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;&quot;io/ioutil&quot;&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;&quot;net/http&quot;&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;&quot;os&quot;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;func&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Println&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;---------------------------------------------------&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Println&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Starting Demo - Calling Oracle in-database ML Model&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Println&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;c&quot;&gt;// Define variables for REST API and parameter for first prediction&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;rest_api&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;full REST API&amp;gt;&quot;&lt;/span&gt;
+
+    &lt;span class=&quot;c&quot;&gt;// This wine is Bad&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;a_country&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Portugal&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;a_province&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Douro&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;a_variety&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Portuguese Red&quot;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;a_price&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;30&quot;&lt;/span&gt;
+
+    &lt;span class=&quot;c&quot;&gt;// call the REST API adding in the parameters&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;err&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;http&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rest_api&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a_country&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a_province&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a_variety&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a_price&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;err&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;nil&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c&quot;&gt;// an error has occurred. Exit&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;The HTTP request failed with error :: %s&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c&quot;&gt;// we got data! Now extract it and print to screen&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;responseData&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ioutil&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ReadAll&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Body&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Println&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;responseData&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Body&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Close&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+    &lt;span class=&quot;c&quot;&gt;// Lets do call it again with a different set of parameters&lt;/span&gt;
+
+    &lt;span class=&quot;c&quot;&gt;// This wine is Good - same details except the price is different&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;a_price&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;31&quot;&lt;/span&gt;
+
+    &lt;span class=&quot;c&quot;&gt;// call the REST API adding in the parameters&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;err&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;http&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;rest_api&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a_country&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a_province&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a_variety&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a_price&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;err&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;nil&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;c&quot;&gt;// an error has occurred. Exit&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;The HTTP request failed with error :: %s&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;os&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Exit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;m&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;responseData&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;:=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ioutil&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ReadAll&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Body&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Println&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;responseData&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;defer&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Body&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Close&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+    &lt;span class=&quot;c&quot;&gt;// All done! &lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Println&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Println&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;...Finished Demo ...&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fmt&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Println&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;---------------------------------------------------&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Brendan Tierney</name></author><category term="ai-ml" /><category term="oci" /><category term="go" /><category term="back-end" /><category term="machine-learning" /></entry><entry><title type="html">How to import data from Microsoft SQL Server to MySQL Database Service</title><link href="https://cool.devo.build/tutorials/microsoft-sql-to-mds" rel="alternate" type="text/html" title="How to import data from Microsoft SQL Server to MySQL Database Service" /><published>2021-11-18T12:11:00+00:00</published><updated>2021-11-18T12:11:00+00:00</updated><id>https://cool.devo.build/</id><content type="html" xml:base="https://cool.devo.build/tutorials/microsoft-sql-to-mds">&lt;p&gt;After checking out how we can import data from &lt;a href=&quot;https://blogs.oracle.com/mysql/post/how-to-import-data-from-postgresql-to-mysql-database-service&quot;&gt;PostgreSQL&lt;/a&gt; and &lt;a href=&quot;https://blogs.oracle.com/mysql/how-to-import-data-from-amazon-redshift-to-mysql-database-service&quot;&gt;Amazon Redshift&lt;/a&gt;, let’s see how we can export data from Microsoft SQL Server and import it into MySQL Database Service (MDS) in Oracle Cloud Infrastructure (OCI).&lt;/p&gt;
+
+&lt;p&gt;This time we will use something extra (sure, for fun, but also because it’s practical): OCI Object Storage!&lt;/p&gt;
+
+&lt;p&gt;The process will be to export the data directly to OCI Object Storage from the MS SQL Server. Afterwards, we’ll import it to MySQL Database Service using the MySQL Shell &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;importTable()&lt;/code&gt; utility, reading directly from the Object Storage Bucket.&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-sql-diagram.webp 1x, assets/microsoft-sql-diagram.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-sql-diagram.webp&quot; data-original=&quot;assets/microsoft-sql-diagram.webp&quot; data-at2x=&quot;assets/microsoft-sql-diagram.webp&quot; title=&quot;MySQL Database Service using MySQL Shell importTable&quot; alt=&quot;MySQL Database Service using MySQL Shell importTable&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;MySQL Database Service using MySQL Shell importTable&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;For this exercise, we will use the BikeStores sample database.&lt;/p&gt;
+
+&lt;h2 id=&quot;tables-definition&quot;&gt;Tables Definition&lt;/h2&gt;
+
+&lt;p&gt;Our first task is to get the table definitions of what we want to export to MDS:&lt;/p&gt;
+
+&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;setvar&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SQLCMDMAXVARTYPEWIDTH&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;30&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;setvar&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SQLCMDMAXFIXEDTYPEWIDTH&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;30&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;go&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;select&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TABLE_SCHEMA&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;table_name&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;information_schema&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tables&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;go&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;TABLE_SCHEMA&lt;/span&gt;                   &lt;span class=&quot;k&quot;&gt;table_name&lt;/span&gt;                    
+&lt;span class=&quot;c1&quot;&gt;------------------------------ ------------------------------&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;production&lt;/span&gt;                     &lt;span class=&quot;n&quot;&gt;categories&lt;/span&gt;                    
+&lt;span class=&quot;n&quot;&gt;production&lt;/span&gt;                     &lt;span class=&quot;n&quot;&gt;brands&lt;/span&gt;                        
+&lt;span class=&quot;n&quot;&gt;production&lt;/span&gt;                     &lt;span class=&quot;n&quot;&gt;products&lt;/span&gt;                      
+&lt;span class=&quot;n&quot;&gt;sales&lt;/span&gt;                          &lt;span class=&quot;n&quot;&gt;customers&lt;/span&gt;                     
+&lt;span class=&quot;n&quot;&gt;sales&lt;/span&gt;                          &lt;span class=&quot;n&quot;&gt;stores&lt;/span&gt;                        
+&lt;span class=&quot;n&quot;&gt;sales&lt;/span&gt;                          &lt;span class=&quot;n&quot;&gt;staffs&lt;/span&gt;                        
+&lt;span class=&quot;n&quot;&gt;sales&lt;/span&gt;                          &lt;span class=&quot;n&quot;&gt;orders&lt;/span&gt;                        
+&lt;span class=&quot;n&quot;&gt;sales&lt;/span&gt;                          &lt;span class=&quot;n&quot;&gt;order_items&lt;/span&gt;                   
+&lt;span class=&quot;n&quot;&gt;production&lt;/span&gt;                     &lt;span class=&quot;n&quot;&gt;stocks&lt;/span&gt;                        
+
+&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;rows&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;affected&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;One big difference between SQL Server and MySQL is that in SQL Server there is a notion of database and table_schemas. In MySQL, “databases” and “table_schemas” are synonymous.&lt;/p&gt;
+
+&lt;p&gt;As all table names are unique, we will just ignore the table_schema names in MySQL and only use the database’s name: &lt;strong&gt;BikeStores&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;It’s easy to get the table definition using SSMS (SQL Server Management Studio), but it’s only available on Windows.&lt;/p&gt;
+
+&lt;p&gt;We have then two remaining options for Linux users like me:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;use Azure Data Studio&lt;/li&gt;
+  &lt;li&gt;use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sqlcmd&lt;/code&gt; command&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;azure-data-studio&quot;&gt;Azure Data Studio&lt;/h3&gt;
+
+&lt;p&gt;From Azure Data Studio, you can get the table definition using &lt;strong&gt;Script as Create&lt;/strong&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-azure-script-create.webp 1x, assets/microsoft-azure-script-create.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-azure-script-create.webp&quot; data-original=&quot;assets/microsoft-azure-script-create.webp&quot; data-at2x=&quot;assets/microsoft-azure-script-create.webp&quot; title=&quot;Azure Data Studio screenshot with dropdown including the script as create option&quot; alt=&quot;Azure Data Studio screenshot with dropdown including the script as create option&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Azure Data Studio screenshot with dropdown including the script as create option&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;And then we get the selected table’s creation statement:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-sql-statement.webp 1x, assets/microsoft-sql-statement.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-sql-statement.webp&quot; data-original=&quot;assets/microsoft-sql-statement.webp&quot; data-at2x=&quot;assets/microsoft-sql-statement.webp&quot; title=&quot;VS Code open with a SQL file containing the table creation statement&quot; alt=&quot;VS Code open with a SQL file containing the table creation statement&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;VS Code open with a SQL file containing the table creation statement&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;As in the previous post (mentioned at the beginning of this article), some minor changes will be required for MySQL.&lt;/p&gt;
+
+&lt;h3 id=&quot;using-sqlcmd&quot;&gt;Using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sqlcmd&lt;/code&gt;&lt;/h3&gt;
+
+&lt;p&gt;For those not willing to use a GUI, it’s also possible to get the table’s definition using the command line.&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, in SQL Server, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;SHOW CREATE TABLE&lt;/code&gt; does not exist. We will use a store procedure to get the info we are looking for: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sp_GetDDL&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;So let’s download it:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;wget https://www.stormrage.com/SQLStuff/sp_GetDDL_Latest.txt
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;I added the following two lines at the top of the downloaded file before loading it to SQL Server:&lt;/p&gt;
+
+&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;SET&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;QUOTED_IDENTIFIER&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;ON&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;GO&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;To load it, this is the command:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;sqlcmd &lt;span class=&quot;nt&quot;&gt;-S&lt;/span&gt; localhost &lt;span class=&quot;nt&quot;&gt;-U&lt;/span&gt; SA &lt;span class=&quot;nt&quot;&gt;-P&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Passw0rd!'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-i&lt;/span&gt; sp_GetDDL_Latest.txt
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We can now connect interactively to SQL Server like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;sqlcmd &lt;span class=&quot;nt&quot;&gt;-S&lt;/span&gt; localhost &lt;span class=&quot;nt&quot;&gt;-U&lt;/span&gt; SA &lt;span class=&quot;nt&quot;&gt;-P&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Passw0rd!'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; BikeStores
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We call the new procedure using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;schema_name&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;table_name&lt;/code&gt; of the tables we want to have in MySQL Database Service:&lt;/p&gt;
+
+&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;setvar&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SQLCMDMAXVARTYPEWIDTH&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1024&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;exec&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sp_GetDDL&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'production.categories'&lt;/span&gt;
+&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;go&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;The command will return something similar to this:&lt;/p&gt;
+
+&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;IF&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;OBJECT_ID&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'[production].[categories]'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;IS&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;NOT&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;NULL&lt;/span&gt; 
+ &lt;span class=&quot;k&quot;&gt;DROP&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;TABLE&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;production&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;categories&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; 
+ &lt;span class=&quot;k&quot;&gt;GO&lt;/span&gt;
+ &lt;span class=&quot;k&quot;&gt;CREATE&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;TABLE&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;production&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;categories&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; 
+ &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;category_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;    &lt;span class=&quot;nb&quot;&gt;INT&lt;/span&gt;              &lt;span class=&quot;k&quot;&gt;IDENTITY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;          &lt;span class=&quot;k&quot;&gt;NOT&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+ &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;category_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;  &lt;span class=&quot;nb&quot;&gt;VARCHAR&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;255&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;                            &lt;span class=&quot;k&quot;&gt;NOT&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+ &lt;span class=&quot;k&quot;&gt;CONSTRAINT&lt;/span&gt;   &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;PK__categori__D54EE9B454313162&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;  &lt;span class=&quot;k&quot;&gt;PRIMARY&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;KEY&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CLUSTERED&lt;/span&gt;    &lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;category_id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;asc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;For MySQL, we rewrite the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;CREATE&lt;/code&gt; statement like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-sql highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;CREATE&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;TABLE&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;categories&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;category_id&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;INT&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;UNSIGNED&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;AUTO_INCREMENT&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;NOT&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;NULL&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;PRIMARY&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;KEY&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;category_name&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;VARCHAR&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;255&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;NOT&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;NULL&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;And we do the same for all tables we want to import to MDS. You can use the Microsoft SQL Server Type Mapping to find the more suitable MySQL data type.&lt;/p&gt;
+
+&lt;h2 id=&quot;mounting-object-storage&quot;&gt;Mounting Object Storage&lt;/h2&gt;
+
+&lt;p&gt;We will use &lt;a href=&quot;https://github.com/s3fs-fuse/s3fs-fuse&quot;&gt;s3fs-fuse&lt;/a&gt; to mount OCI Object Storage Bucket on our SQL Server — as explained in &lt;a href=&quot;https://blogs.oracle.com/cloud-infrastructure/post/mounting-an-object-storage-bucket-as-file-system-on-oracle-linux&quot;&gt;this article&lt;/a&gt; — and dump the tables in it.&lt;/p&gt;
+
+&lt;p&gt;We use &lt;a href=&quot;https://docs.fedoraproject.org/en-US/epel/&quot;&gt;EPEL&lt;/a&gt; to install the required package:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;yum &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; s3fs-fuse
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We create a bucket on OCI’s Dashboard:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-create-bucket-modal.webp 1x, assets/microsoft-create-bucket-modal.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-create-bucket-modal.webp&quot; data-original=&quot;assets/microsoft-create-bucket-modal.webp&quot; data-at2x=&quot;assets/microsoft-create-bucket-modal.webp&quot; title=&quot;OCI Create Bucket panel with a field for the bucket name and tag information&quot; alt=&quot;OCI Create Bucket panel with a field for the bucket name and tag information&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;OCI Create Bucket panel with a field for the bucket name and tag information&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;We need to create an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ACCESS_KEY_ID&lt;/code&gt; and a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;SECRET_ACCESS_KEY&lt;/code&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-settings-keys.png 1x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-settings-keys.png&quot; data-original=&quot;assets/microsoft-settings-keys.png&quot; data-at2x=&quot;assets/microsoft-settings-keys@2x.png&quot; title=&quot;Find the Secret Keys menu in OCI's User Settings&quot; alt=&quot;Find the Secret Keys menu in OCI's User Settings&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Find the Secret Keys menu in OCI's User Settings&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-secret-keys.webp 1x, assets/microsoft-secret-keys.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-secret-keys.webp&quot; data-original=&quot;assets/microsoft-secret-keys.webp&quot; data-at2x=&quot;assets/microsoft-secret-keys.webp&quot; title=&quot;The Generate Customer Keys button displayed with OCI's Resources panel displayed&quot; alt=&quot;The Generate Customer Keys button displayed with OCI's Resources panel displayed&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;The Generate Customer Keys button displayed with OCI's Resources panel displayed&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;We copy these keys on one single line separated with a colon in a file, for example ~/.passwd-ocifs.&lt;/p&gt;
+
+&lt;p&gt;And we mount it like this:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;chmod &lt;/span&gt;600 ~/.passwd-ocifs
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;mkdir&lt;/span&gt; /mnt/ocifs
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;s3fs lefred-bucket /mnt/ocifs &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;endpoint&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;us-ashburn-1 &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;passwd_file&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;~/.passwd-ocifs &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;url&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;https://ixxxxxxxxxx.compat.objectstorage.us-ashburn-1.oraclecloud.com/ &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-onomultipart&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; use_path_request_style
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now we can write data directly to our Object Storage Bucket using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/mnt/ocifs&lt;/code&gt;.&lt;/p&gt;
+
+&lt;h2 id=&quot;exporting-data&quot;&gt;Exporting Data&lt;/h2&gt;
+
+&lt;p&gt;Everything is ready to export the content of the tables into CSV files:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;sqlcmd &lt;span class=&quot;nt&quot;&gt;-S&lt;/span&gt; localhost &lt;span class=&quot;nt&quot;&gt;-U&lt;/span&gt; SA &lt;span class=&quot;nt&quot;&gt;-P&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'Passw0rd!'&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-d&lt;/span&gt; BikeStores &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-Q&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;set nocount on; select * from production.categories&quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; /mnt/ocifs/categories.csv &lt;span class=&quot;nt&quot;&gt;-h-1&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-s&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;,&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-w&lt;/span&gt; 700 &lt;span class=&quot;nt&quot;&gt;-W&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;ls&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-lh&lt;/span&gt; /mnt/ocifs/
+&lt;span class=&quot;go&quot;&gt;total 512
+-rw-r--r--. 1 root root 147 Aug 24 21:28 categories.csv
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We can directly see it in OCI’s Dashboard too:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-csv-in-dashboard.webp 1x, assets/microsoft-csv-in-dashboard.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-csv-in-dashboard.webp&quot; data-original=&quot;assets/microsoft-csv-in-dashboard.webp&quot; data-at2x=&quot;assets/microsoft-csv-in-dashboard.webp&quot; title=&quot;categories.csv now in the OCI dashboard&quot; alt=&quot;categories.csv now in the OCI dashboard&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;categories.csv now in the OCI dashboard&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;We do the exact same process for all the tables we want to import to MySQL Database Service.&lt;/p&gt;
+
+&lt;p&gt;You can, of course, also use the GUI to export to CSV and import those CVS files using MySQL Shell directly without using Object Storage:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-import-csv.webp 1x, assets/microsoft-import-csv.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-import-csv.webp&quot; data-original=&quot;assets/microsoft-import-csv.webp&quot; data-at2x=&quot;assets/microsoft-import-csv.webp&quot; title=&quot;VS Code with SQL command to import CSV tables&quot; alt=&quot;VS Code with SQL command to import CSV tables&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;VS Code with SQL command to import CSV tables&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;h2 id=&quot;importing-data&quot;&gt;Importing Data&lt;/h2&gt;
+
+&lt;p&gt;As usual, we will use MySQL Shell to import in MDS the data that has been generated from MS SQL Server.&lt;/p&gt;
+
+&lt;p&gt;We start by creating the database and the tables if this is not yet done:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-create-db-tables.webp 1x, assets/microsoft-create-db-tables.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-create-db-tables.webp&quot; data-original=&quot;assets/microsoft-create-db-tables.webp&quot; data-at2x=&quot;assets/microsoft-create-db-tables.webp&quot; title=&quot;Command line to create database tables&quot; alt=&quot;Command line to create database tables&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Command line to create database tables&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;Don’t forget that if you need an OCI config file on the compute instance, you can create it from the OCI Dashboard for your user (Identity -&amp;gt; User -&amp;gt; User Details):&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-keys-resources.webp 1x, assets/microsoft-keys-resources.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-keys-resources.webp&quot; data-original=&quot;assets/microsoft-keys-resources.webp&quot; data-at2x=&quot;assets/microsoft-keys-resources.webp&quot; title=&quot;OCI dashboard with callout highlighting the 'Add API Keys' button&quot; alt=&quot;OCI dashboard with callout highlighting the 'Add API Keys' button&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;OCI dashboard with callout highlighting the 'Add API Keys' button&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;You’ll need to download the keys if you generate them, and then copy the content of the config in &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;~/.oci/config&lt;/code&gt; and set the private key’s location and filename:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-config-file.webp 1x, assets/microsoft-config-file.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-config-file.webp&quot; data-original=&quot;assets/microsoft-config-file.webp&quot; data-at2x=&quot;assets/microsoft-config-file.webp&quot; title=&quot;OCI configuration file preview&quot; alt=&quot;OCI configuration file preview&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;OCI configuration file preview&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;After that, you’re ready to import each table using MySQL Shell:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-sql-import-statements.webp 1x, assets/microsoft-sql-import-statements.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-sql-import-statements.webp&quot; data-original=&quot;assets/microsoft-sql-import-statements.webp&quot; data-at2x=&quot;assets/microsoft-sql-import-statements.webp&quot; title=&quot;Import MySQL Shell table statements&quot; alt=&quot;Import MySQL Shell table statements&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Import MySQL Shell table statements&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;We can see that the data is now present in MySQL:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-sqltable-in-terminal.webp 1x, assets/microsoft-sqltable-in-terminal.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-sqltable-in-terminal.webp&quot; data-original=&quot;assets/microsoft-sqltable-in-terminal.webp&quot; data-at2x=&quot;assets/microsoft-sqltable-in-terminal.webp&quot; title=&quot;Shell with database table displayed&quot; alt=&quot;Shell with database table displayed&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Shell with database table displayed&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;Repeat the same operation for each table you want to load into MySQL Database Service.&lt;/p&gt;
+
+&lt;p&gt;In case you haven’t used &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sqlcmd&lt;/code&gt; and Object Storage and prefer the use of the GUI to generate the CSV files, you can import them like this:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/microsoft-obj-storage-table.webp 1x, assets/microsoft-obj-storage-table.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/microsoft-obj-storage-table.webp&quot; data-original=&quot;assets/microsoft-obj-storage-table.webp&quot; data-at2x=&quot;assets/microsoft-obj-storage-table.webp&quot; title=&quot;Terminal with alternative file import statement from the above visual&quot; alt=&quot;Terminal with alternative file import statement from the above visual&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Terminal with alternative file import statement from the above visual&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;Once again, the best solution to load data to MySQL Database Service is MySQL Shell.&lt;/p&gt;
+
+&lt;p&gt;Enjoy MySQL and MySQL Database Service!&lt;/p&gt;</content><author><name>Frédéric Descamps</name></author><category term="modernize" /><category term="mySQL" /><category term="analytics" /><category term="back-end" /></entry><entry><title type="html">Use Matomo Website Analytics on OCI with MDS</title><link href="https://cool.devo.build/tutorials/matamo-with-oci-mds" rel="alternate" type="text/html" title="Use Matomo Website Analytics on OCI with MDS" /><published>2021-11-18T11:11:00+00:00</published><updated>2021-11-18T11:11:00+00:00</updated><id>https://cool.devo.build/</id><content type="html" xml:base="https://cool.devo.build/tutorials/matamo-with-oci-mds">&lt;p&gt;&lt;a href=&quot;https://matomo.org/&quot;&gt;Matomo&lt;/a&gt; is a Google Analytics alternative for tracking metrics on your websites. If you follow my blog, you know how easy it is to deploy popular Open Source web solutions like WordPress, Joomla!, Drupal, Moodle, and Magento on Oracle Cloud Infrastructure (OCI).&lt;/p&gt;
+
+&lt;p&gt;All these solutions are using MySQL Database Service to store their data.&lt;/p&gt;
+
+&lt;p&gt;I’ve recently added a &lt;a href=&quot;https://github.com/lefred/oci-matomo-mds&quot;&gt;new stack&lt;/a&gt; to  deploy Matomo. Of course, this can be a standalone installation to collect all your analytics from self-hosted websites, but today I’ll describe how to use it with an existing stack we’ve already deployed on OCI.&lt;/p&gt;
+
+&lt;p&gt;For this example, I deployed WordPress using the following stack: &lt;a href=&quot;https://github.com/lefred/oci-wordpress-mds&quot;&gt;oci-wordpress-mds&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The first step is to &lt;a href=&quot;https://www.oracle.com/cloud/sign-in.html?redirect_uri=https%3A%2F%2Fcloud.oracle.com%2Fresourcemanager%2Fstacks%2Fcreate%3FzipUrl%3Dhttps%3A%2F%2Fgithub.com%2Flefred%2Foci-matomo-mds%2Freleases%2Fdownload%2Fv1.0.0%2Fstack_matomo_mds.zip&quot;&gt;deploy Matomo on OCI&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;In the second screen of the Stack’s wizard, we specify that we want to use an existing infrastructure. This way we won’t need to recreate our VCN, subnets, security lists, Internet Gateway, etc. — we want share what we’ve already deployed for WordPress:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/matamo-existing-infrastructure.webp 1x, assets/matamo-existing-infrastructure.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/matamo-existing-infrastructure.webp&quot; data-original=&quot;assets/matamo-existing-infrastructure.webp&quot; data-at2x=&quot;assets/matamo-existing-infrastructure.webp&quot; title=&quot;OCI panel where you can toggle whether or not to use existing infrastructure&quot; alt=&quot;OCI panel&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;OCI panel where you can toggle whether or not to use existing infrastructure&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;As you can see for the majority of the input fields, we need to provide the OCID. These can be found on the OCI’s dashboard. For example the OCID for the MySQL Database can be found here:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/matamo-ocid-commandwebp.webp 1x, assets/matamo-ocid-commandwebp.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/matamo-ocid-commandwebp.webp&quot; data-original=&quot;assets/matamo-ocid-commandwebp.webp&quot; data-at2x=&quot;assets/matamo-ocid-commandwebp.webp&quot; title=&quot;OCI dashboard with callouts highlighting the Copy OCID command&quot; alt=&quot;OCI dashboard&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;OCI dashboard with callouts highlighting the Copy OCID command&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;We do this for every resources we want to reuse.&lt;/p&gt;
+
+&lt;p&gt;Then we create an apply job for the stack and when done we can get the public IP and other necessary information in the output section:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/matamo-output-info.webp 1x, assets/matamo-output-info.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/matamo-output-info.webp&quot; data-original=&quot;assets/matamo-output-info.webp&quot; data-at2x=&quot;assets/matamo-output-info.webp&quot; title=&quot;The Outputs page in OCI, where you can find IP address, username, and other information&quot; alt=&quot;Outputs page&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;The Outputs page in OCI, where you can find IP address, username, and other information&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;We can then enter the public IP in a browser and finish the installation:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/matamo-progress-bar.webp 1x, assets/matamo-progress-bar.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/matamo-progress-bar.webp&quot; data-original=&quot;assets/matamo-progress-bar.webp&quot; data-at2x=&quot;assets/matamo-progress-bar.webp&quot; title=&quot;Matamo dashboard with a halfway-finished progress bar&quot; alt=&quot;Matamo dashboard&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Matamo dashboard with a halfway-finished progress bar&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;It’s important to use the right connector/adapter: &lt;strong&gt;MYSQLI&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;Then we follow the wizard and enter the required information.&lt;/p&gt;
+
+&lt;p&gt;When done, we can add our WordPress in Matomo to start tracking it. The first step is the retrieve its name (in our case, its public IP as I don’t use DNS):&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/matamo-wordpress-public-ip.webp 1x, assets/matamo-wordpress-public-ip.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/matamo-wordpress-public-ip.webp&quot; data-original=&quot;assets/matamo-wordpress-public-ip.webp&quot; data-at2x=&quot;assets/matamo-wordpress-public-ip.webp&quot; title=&quot;WordPress public IP is available to be copied from the OCI dashboard&quot; alt=&quot;WordPress public IP&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;WordPress public IP is available to be copied from the OCI dashboard&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;Once added in Matomo, we can retrieve the javascript code used to track our website:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/matamo-js-tracking-code.webp 1x, assets/matamo-js-tracking-code.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/matamo-js-tracking-code.webp&quot; data-original=&quot;assets/matamo-js-tracking-code.webp&quot; data-at2x=&quot;assets/matamo-js-tracking-code.webp&quot; title=&quot;JS tracking code&quot; alt=&quot;JS tracking code&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;JS tracking code&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;We copy that code and we go into the admin dashboard of our WordPress site to modify the theme and add the previous code in the header file:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/matamo-wp-editor.webp 1x, assets/matamo-wp-editor.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/matamo-wp-editor.webp&quot; data-original=&quot;assets/matamo-wp-editor.webp&quot; data-at2x=&quot;assets/matamo-wp-editor.webp&quot; title=&quot;WordPress theme editor dashboard&quot; alt=&quot;WordPress theme editor dashboard&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;WordPress theme editor dashboard&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/matamo-wordpress-js-paste.webp 1x, assets/matamo-wordpress-js-paste.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/matamo-wordpress-js-paste.webp&quot; data-original=&quot;assets/matamo-wordpress-js-paste.webp&quot; data-at2x=&quot;assets/matamo-wordpress-js-paste.webp&quot; title=&quot;JS code pasted into WordPress editor&quot; alt=&quot;JS Code&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;JS code pasted into WordPress editor&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;And this is all we needed to be able to get analytics of our website we deployed on OCI.&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/matamo-dash-final-code.webp 1x, assets/matamo-dash-final-code.webp 2x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/matamo-dash-final-code.webp&quot; data-original=&quot;assets/matamo-dash-final-code.webp&quot; data-at2x=&quot;assets/matamo-dash-final-code.webp&quot; title=&quot;Matomo dashboard&quot; alt=&quot;Matomo dashboard&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Matomo dashboard&lt;/figcaption&gt;
+            &lt;/figure&gt;</content><author><name>Frédéric Descamps</name></author><category term="modernize" /><category term="mysql" /><category term="analytics" /><category term="backend" /></entry><entry><title type="html">Get Started with the Feature Store HopsWorks (LogicalClocks) on Oracle Cloud</title><link href="https://cool.devo.build/tutorials/hops-works-logicalclocks" rel="alternate" type="text/html" title="Get Started with the Feature Store HopsWorks (LogicalClocks) on Oracle Cloud" /><published>2021-11-18T09:45:00+00:00</published><updated>2021-11-18T09:45:00+00:00</updated><id>https://cool.devo.build/</id><content type="html" xml:base="https://cool.devo.build/tutorials/hops-works-logicalclocks">&lt;div class=&quot;slides&quot; id=&quot;slideshow&quot;&gt;
+
+  &lt;div class=&quot;slide active&quot; id=&quot;slide-0&quot;&gt;
+
+    &lt;h2 class=&quot;slide__title&quot;&gt;&lt;span class=&quot;slide__num&quot;&gt;1&lt;/span&gt; Introduction&lt;/h2&gt;
+
+    &lt;p&gt;In this walk-through you’ll configure your environment to run HopsWorks in Oracle Cloud Infrastructure.&lt;/p&gt;
+
+    &lt;h3 id=&quot;prerequisites&quot;&gt;Prerequisites&lt;/h3&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;VM 2.1 with Oracle Linux 7.9 (OEL7) has been deployed in Oracle Cloud Infrastructure (OCI)&lt;/li&gt;
+      &lt;li&gt;Oracle Linux 7.9 uses &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;pip3.6&lt;/code&gt; by default&lt;/li&gt;
+      &lt;li&gt;Python 3.6 or higher is installed&lt;/li&gt;
+      &lt;li&gt;You have access to root either directly or using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sudo&lt;/code&gt;. In OCI you are connected as user &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;opc&lt;/code&gt; with sudo privilege by default&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;div class=&quot;slide__nav&quot;&gt;&lt;a href=&quot;javascript:cool.slides.goToSlide(1)&quot; class=&quot;slides__btn--begin&quot;&gt;Begin &amp;raquo;&lt;/a&gt;&lt;/div&gt;
+
+  &lt;/div&gt;
+
+  &lt;div class=&quot;slide&quot; id=&quot;slide-1&quot;&gt;
+
+    &lt;h2 class=&quot;slide__title&quot;&gt;&lt;span class=&quot;slide__num&quot;&gt;2&lt;/span&gt; Jupyterlab Installation&lt;/h2&gt;
+
+    &lt;p&gt;The Jupyterlab install is pretty simple. It consists of setting up Python, then installing Python components and libraries.&lt;/p&gt;
+
+    &lt;p&gt;Let’s start with setting up the Python environment.&lt;/p&gt;
+
+    &lt;h3 id=&quot;python-setup&quot;&gt;Python Setup&lt;/h3&gt;
+
+    &lt;p&gt;By default, OEL7 runs Python 3. The first step is to install &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;virtualenv&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;pip&lt;/code&gt;.&lt;/p&gt;
+
+    &lt;h4 id=&quot;install-virtualenv&quot;&gt;Install virtualenv&lt;/h4&gt;
+
+    &lt;p&gt;Virtualenv enables us to create isolated sandpits to develop Python applications without running into module or library conflicts. It’s simple to install.&lt;/p&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;pip3.6 &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;virtualenv
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;p&gt;Next, we can create a virtual environment and enable it.&lt;/p&gt;
+
+    &lt;h4 id=&quot;create-a-myvirtualenv-environment&quot;&gt;Create a myvirtualenv Environment&lt;/h4&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;virtualenv &lt;span class=&quot;nt&quot;&gt;-p&lt;/span&gt; /usr/bin/python3 myvirtualenv
+&lt;span class=&quot;gp&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;Activate the &lt;span class=&quot;nb&quot;&gt;env&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;source &lt;/span&gt;myvirtualenv/bin/activate
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;h4 id=&quot;check-the-list-of-python-libraries-in-your-environment&quot;&gt;Check the List of Python Libraries in Your Environment&lt;/h4&gt;
+
+    &lt;p&gt;Running the following command will show what Python models we have installed at this point.&lt;/p&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip3 list
+&lt;span class=&quot;go&quot;&gt;Package    Version
+---------- -------
+pip        21.1.3
+setuptools 57.1.0
+wheel      0.36.2
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;WARNING: You are using pip version 21.1.3;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;however, version 21.2.1 is available.
+&lt;span class=&quot;go&quot;&gt;You should consider upgrading via the '/home/opc/myvirtualenv/bin/python -m pip install --upgrade pip' command.
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;h4 id=&quot;upgrade-your-pip-environment&quot;&gt;Upgrade Your pip Environment&lt;/h4&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;/home/opc/myvirtualenv/bin/python &lt;span class=&quot;nt&quot;&gt;-m&lt;/span&gt; pip &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--upgrade&lt;/span&gt; pip
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+    &lt;h3 id=&quot;jupyterlab-setup&quot;&gt;Jupyterlab Setup&lt;/h3&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip3 &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;jupyterlab
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;h4 id=&quot;install-python-libraries-for-machine-learning-or-an-etl-process&quot;&gt;Install Python Libraries for Machine Learning or an ETL Process&lt;/h4&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;pandas
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;pandarallel
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;dask
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;seaborn
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;matplotlib
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;plotly
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-lxml&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;==&lt;/span&gt;4.6.3
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;selenium
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;beautifulsoup4
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;scikit-learn
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;h4 id=&quot;install-other-python-libraries-for-kafka-access-and-web-server-access&quot;&gt;Install Other Python Libraries for Kafka Access and WEB Server Access&lt;/h4&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;kafka-python &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;v2.0.0&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;Flask
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;gunicorn
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;h4 id=&quot;install-extensions-for-jupyterlab-environment&quot;&gt;Install Extensions for Jupyterlab Environment&lt;/h4&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;pip &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;jupyter_contrib_nbextensions
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;jupyter contrib nbextension &lt;span class=&quot;nb&quot;&gt;install&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--user&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;jupyter nbextension &lt;span class=&quot;nb&quot;&gt;enable &lt;/span&gt;execute_time/ExecuteTime
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;div class=&quot;slide__nav&quot;&gt;&lt;a href=&quot;javascript:cool.slides.goToSlide(0)&quot;&gt;&amp;laquo; Back&lt;/a&gt; &lt;a href=&quot;javascript:cool.slides.goToSlide(2)&quot;&gt;Continue &amp;raquo;&lt;/a&gt;&lt;/div&gt;
+
+  &lt;/div&gt;
+
+  &lt;div class=&quot;slide&quot; id=&quot;slide-2&quot;&gt;
+
+    &lt;h2 class=&quot;slide__title&quot;&gt;&lt;span class=&quot;slide__num&quot;&gt;3&lt;/span&gt; Configure Jupyterlab Like the OEL7 Linux Service&lt;/h2&gt;
+
+    &lt;p&gt;Create a script to automatically instantiate and reboot Jupyterlab with &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;opc&lt;/code&gt; user.&lt;/p&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;vi /home/opc/launchjupyterlab.sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;h3 id=&quot;script-for-launchjupyterlabsh&quot;&gt;Script for launchjupyterlab.sh&lt;/h3&gt;
+
+    &lt;p&gt;Using virtualenv, you can launch Jupyterlab on a specific port (for example: 8001) and listen on a public IP.&lt;/p&gt;
+
+    &lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/bash&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;# Activate myvirtualenv Environment&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;source &lt;/span&gt;myvirtualenv/bin/activate
+
+&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /home/opc
+
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;start&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;then
+    &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;nohup &lt;/span&gt;jupyter-lab &lt;span class=&quot;nt&quot;&gt;--ip&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;0.0.0.0 &lt;span class=&quot;nt&quot;&gt;--port&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;8001 &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; ./nohup.log 2&amp;gt;&amp;amp;1 &amp;amp;
+    &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$!&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; /home/opc/jupyter.pid
+&lt;span class=&quot;k&quot;&gt;else
+    &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;kill&lt;/span&gt; &lt;span class=&quot;si&quot;&gt;$(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;cat&lt;/span&gt; /home/opc/jupyter.pid&lt;span class=&quot;si&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;p&gt;We need to make the script executable so it can be run from the jupyterlab service.&lt;/p&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;chmod &lt;/span&gt;777 /home/opc/launchjupyterlab.sh
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;h3 id=&quot;connect-to-root-user&quot;&gt;Connect to Root User&lt;/h3&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-i&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;h3 id=&quot;create-script-to-start-stop-jupyterlab&quot;&gt;Create Script to Start, Stop “jupyterlab”&lt;/h3&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;vi /etc/systemd/system/jupyterlab.service
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;h3 id=&quot;launch-opc-user-with-launchjupyterlabsh&quot;&gt;Launch “opc” User with “launchjupyterlab.sh”&lt;/h3&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;go&quot;&gt;[Unit]
+Description=Service to start jupyterlab for opc
+Documentation=
+[Service]
+User=opc
+Group=opc
+Type=forking
+WorkingDirectory=/home/opc
+ExecStart=/home/opc/launchjupyterlab.sh start
+ExecStop=/home/opc/launchjupyterlab.sh stop
+[Install]
+WantedBy=multi-user.target
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;h3 id=&quot;test-jupyterlab-service&quot;&gt;Test Jupyterlab Service&lt;/h3&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;systemctl start jupyterlab
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;systemctl status jupyterlab
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;systemctl &lt;span class=&quot;nb&quot;&gt;enable &lt;/span&gt;jupyterlab
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;div class=&quot;slide__nav&quot;&gt;&lt;a href=&quot;javascript:cool.slides.goToSlide(1)&quot;&gt;&amp;laquo; Back&lt;/a&gt; &lt;a href=&quot;javascript:cool.slides.goToSlide(3)&quot;&gt;Continue &amp;raquo;&lt;/a&gt;&lt;/div&gt;
+
+  &lt;/div&gt;
+
+  &lt;div class=&quot;slide&quot; id=&quot;slide-3&quot;&gt;
+
+    &lt;h2 class=&quot;slide__title&quot;&gt;&lt;span class=&quot;slide__num&quot;&gt;4&lt;/span&gt; Reboot for a Final Check&lt;/h2&gt;
+
+    &lt;p&gt;Now reboot your machine to check if the jupyterlab script is enabled by default on port 8001.&lt;/p&gt;
+
+    &lt;p&gt;You need to open port 8001 to your virtual machine VM 2.1 in order to access using your public IP.&lt;/p&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;firewall-cmd  &lt;span class=&quot;nt&quot;&gt;--permanent&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--zone&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;public &lt;span class=&quot;nt&quot;&gt;--list-ports&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;firewall-cmd &lt;span class=&quot;nt&quot;&gt;--get-active-zones&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;firewall-cmd &lt;span class=&quot;nt&quot;&gt;--permanent&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--zone&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;public &lt;span class=&quot;nt&quot;&gt;--add-port&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;8001/tcp
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;firewall-cmd &lt;span class=&quot;nt&quot;&gt;--reload&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;p&gt;If you’re running directly on a virtual machine and have a browser installed, it should take you directly into the jupyter environment. Connect to “http://xxx.xxx.xxx.xxx:8001/”.&lt;/p&gt;
+
+    &lt;p&gt;You should see the next Python web environment “Jupyterlab.”&lt;/p&gt;
+
+    &lt;div class=&quot;slide__nav&quot;&gt;&lt;a href=&quot;javascript:cool.slides.goToSlide(2)&quot;&gt;&amp;laquo; Back&lt;/a&gt;&lt;/div&gt;
+
+  &lt;/div&gt;
+
+&lt;/div&gt;</content><author><name>Olivier Francois Xavier Perard</name></author><category term="cloudapps" /><category term="feature-store" /><category term="open-source" /><category term="machine-learning" /></entry><entry><title type="html">Installation Guide for OCI Monitoring</title><link href="https://cool.devo.build/tutorials/ocimonitoring-w-steampipe-prometheus-grafana" rel="alternate" type="text/html" title="Installation Guide for OCI Monitoring" /><published>2021-11-18T09:42:00+00:00</published><updated>2021-11-18T09:42:00+00:00</updated><id>https://cool.devo.build/</id><content type="html" xml:base="https://cool.devo.build/tutorials/ocimonitoring-w-steampipe-prometheus-grafana">&lt;h1 id=&quot;an-installation-guide-for-oci-monitoring&quot;&gt;An Installation Guide for OCI Monitoring&lt;/h1&gt;
+
+&lt;blockquote class=&quot;notice&quot;&gt;
+  &lt;p&gt;&lt;strong&gt;Note:&lt;/strong&gt; This is an experimental environment. Feel free to try it out, extend it, and have fun with it!&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;In this walkthrough you’ll install a basic OCI monitoring solution with these components based on Ansible in Oracle Linux 8. The setup is tested for:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;OL8 running in ESXi&lt;/li&gt;
+  &lt;li&gt;OL8 running in local VMware Workstation with NAT&lt;/li&gt;
+  &lt;li&gt;OL8 running in Oracle Cloud Infrastructure&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Installed components by Ansible roles:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Docker&lt;/li&gt;
+  &lt;li&gt;Steampipe&lt;/li&gt;
+  &lt;li&gt;Grafana&lt;/li&gt;
+  &lt;li&gt;Prometheus&lt;/li&gt;
+  &lt;li&gt;Push Gateway&lt;/li&gt;
+  &lt;li&gt;PostgreSQL&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;links&quot;&gt;Links&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://steampipe.io/&quot;&gt;Steampipe&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://prometheus.io/&quot;&gt;Prometheus&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://grafana.com/&quot;&gt;Grafana&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://docs.oracle.com/en-us/iaas/Content/API/Concepts/cliconcepts.htm&quot;&gt;OCI CLI&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;how-it-works&quot;&gt;How it works&lt;/h2&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/oci-monitoring-architecture.png 1x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/oci-monitoring-architecture.png&quot; data-original=&quot;assets/oci-monitoring-architecture.png&quot; data-at2x=&quot;assets/oci-monitoring-architecture@2x.png&quot; title=&quot;Architecture&quot; alt=&quot;Architecture Overview&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Architecture&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Execute the Python script&lt;/li&gt;
+  &lt;li&gt;Steampipe gathers the information from Oracle Cloud Infrastructure&lt;/li&gt;
+  &lt;li&gt;The return value is pushed to Prometheus Push Gateway&lt;/li&gt;
+  &lt;li&gt;Prometheus scrapes the metrics from the gateway&lt;/li&gt;
+  &lt;li&gt;Grafana reads the metrics from Prometheus&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;prerequisites&quot;&gt;Prerequisites&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;root access by password&lt;/li&gt;
+  &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/etc/hosts&lt;/code&gt; configured&lt;/li&gt;
+  &lt;li&gt;Ansible and Git configured&lt;/li&gt;
+  &lt;li&gt;Internet access&lt;/li&gt;
+  &lt;li&gt;Oracle Cloud Infrastructure user with inspect permissions, including SSH PEM key and configuration&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;software-installation-ol8-esxi--ol8-vmware&quot;&gt;Software Installation OL8 ESXi / OL8 VMware&lt;/h3&gt;
+
+&lt;p&gt;As user &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;root&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;yum &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;yum-utils
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;yum &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;oracle-epel-release-el8
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;yum-config-manager &lt;span class=&quot;nt&quot;&gt;--enable&lt;/span&gt; ol8_developer_EPEL
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;yum &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;ansible git
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;software-installation-ol8-oracle-cloud-infrastructure&quot;&gt;Software Installation OL8 Oracle Cloud Infrastructure&lt;/h3&gt;
+
+&lt;p&gt;As user &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;opc&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;dnf upgrade
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;dnf &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;oracle-epel-release-el8
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;dnf config-manager &lt;span class=&quot;nt&quot;&gt;--enable&lt;/span&gt; ol8_developer_EPEL
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;dnf &lt;span class=&quot;nt&quot;&gt;-y&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;ansible git
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;ansible-ssh-configuration-for-oracle-cloud-infrastructure&quot;&gt;Ansible SSH Configuration for Oracle Cloud Infrastructure&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Upload the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;opc&lt;/code&gt;’s SSH private key to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/home/opc/.ssh&lt;/code&gt; temporarily for installaton purposes&lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Change the Ansible checked out hosts file to:&lt;/p&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;go&quot;&gt;  [all:vars]
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;  ansible_ssh_private_key_file=/home/opc/.ssh/&amp;lt;your_ssh_key_file_name_here&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt;
+&lt;/span&gt;&lt;span class=&quot;go&quot;&gt;
+  [monitoring]
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;  &amp;lt;your_oci_compute_private_instance_here&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;ansible_user&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;opc &lt;span class=&quot;nv&quot;&gt;ansible_python_interpreter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;/usr/bin/env python3&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;blockquote class=&quot;alert&quot;&gt;
+  &lt;p&gt;After the installation, it’s a good practice to remove the opc private key from your compute instance&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;steps&quot;&gt;Steps&lt;/h2&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Login to Oracle Linux 8 as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;root&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;Clone the repository to a local folder such as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/root/git&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;Change to subdirectory &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;oci-monitoring&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;Update the Ansible &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;hosts&lt;/code&gt; file with your IP and root password. &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ansible_ssh_pass&lt;/code&gt; is required for local connections&lt;/li&gt;
+  &lt;li&gt;Run &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ansible-galaxy collection install -r roles/requirements.yml&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;Run &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ansible-playbook install.yml&lt;/code&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;As &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;root&lt;/code&gt;, verify that all Docker containers are running:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;docker ps
+&lt;span class=&quot;go&quot;&gt;CONTAINER ID   IMAGE              COMMAND                  CREATED             STATUS             PORTS                    NAMES
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;f7f2e137f4a1   prom/pushgateway   &quot;/bin/pushgateway&quot;       About an hour ago   Up About an hour   0.0.0.0:9091-&amp;gt;&lt;/span&gt;9091/tcp   pushgateway
+&lt;span class=&quot;gp&quot;&gt;c6ecc72065c9   prom/prometheus    &quot;/bin/prometheus --c…&quot;   About an hour ago   Up About an hour   0.0.0.0:9090-&amp;gt;&lt;/span&gt;9090/tcp   prometheus
+&lt;span class=&quot;gp&quot;&gt;3485de8cc1f9   grafana/grafana    &quot;/run.sh&quot;                About an hour ago   Up About an hour   0.0.0.0:3000-&amp;gt;&lt;/span&gt;3000/tcp   grafana
+&lt;span class=&quot;gp&quot;&gt;8e821aa0044b   turbot/steampipe   &quot;docker-entrypoint.s…&quot;   About an hour ago   Up 30 minutes      0.0.0.0:9193-&amp;gt;&lt;/span&gt;9193/tcp   steampipe
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;network-security&quot;&gt;Network Security&lt;/h3&gt;
+
+&lt;p&gt;The Ansible playbooks also open these ports in the VM for troubleshooting access:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;3000 - Grafana&lt;/li&gt;
+  &lt;li&gt;9090 - Prometheus&lt;/li&gt;
+  &lt;li&gt;9091 - Prometheus Push Gateway&lt;/li&gt;
+  &lt;li&gt;9093 - Steampipe Service&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;oci-configuration&quot;&gt;OCI Configuration&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;After the successful Ansible execution, put your personal OCI configuration and SSH key into the directory &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/home/steampipe/.oci&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;Replace the dummy values&lt;/li&gt;
+  &lt;li&gt;Update the file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/home/steampipe/config/oci.spc&lt;/code&gt; with the correct SSH key file name&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;blockquote class=&quot;notice&quot;&gt;
+  &lt;p&gt;Take care that owner and group of the OCI configuration file is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;steampipe&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Example:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;pwd&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;/home/steampipe/.oci
+
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;ls&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-l&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;total 8
+-rw-r--r--. 1 steampipe steampipe  307 Aug  9 09:01 config
+-rw-r--r--. 1 steampipe steampipe 1730 Aug  9 09:01 jurasuedfuss-20210809.pem
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Restart the Docker container for Steampipe:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;docker stop steampipe
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;docker start steampipe
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;how-to-create-the-user-for-oci-access---based-on-oci-cli&quot;&gt;How to create the user for OCI access - based on OCI CLI&lt;/h2&gt;
+
+&lt;p&gt;Next we create an OCI user for monitoring. An existing OCI CLI setup for an tenant administrator is required to execute these steps. The required SSH key in PEM format can be downloaded from the OCI web interface. The user, group, and policy can be created in web interface as well.&lt;/p&gt;
+
+&lt;p&gt;All we need for Steampipe is the OCI config file for the new user and their SSH key in PEM format.&lt;/p&gt;
+
+&lt;h3 id=&quot;create-user&quot;&gt;Create User&lt;/h3&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;oci iam user create &lt;span class=&quot;nt&quot;&gt;--name&lt;/span&gt; oci_user_readonly &lt;span class=&quot;nt&quot;&gt;--description&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;OCI User with inspect all-resources.&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;create-group&quot;&gt;Create Group&lt;/h3&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;oci iam group create &lt;span class=&quot;nt&quot;&gt;--name&lt;/span&gt; oci_group_readonly &lt;span class=&quot;nt&quot;&gt;--description&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;OCI Group with inspect all-resources.&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;add-user-to-group&quot;&gt;Add User to Group&lt;/h3&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;oci iam group add-user &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--user-id&lt;/span&gt; &amp;lt;your user OCID from created user above&amp;gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--group-id&lt;/span&gt; &amp;lt;your group OCID from created group above&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;create-policy&quot;&gt;Create Policy&lt;/h3&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;oci iam policy create &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--compartment-id&lt;/span&gt; &amp;lt;your tenancy OCID&amp;gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--name&lt;/span&gt; oci_policy_readonly &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--description&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;OCI Policy with inspect all-resources.&quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;--statements&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'[ &quot;allow group oci_group_readonly to inspect all-resources on tenancy&quot; ]'&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;add-api-key&quot;&gt;Add API Key&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Add your API key&lt;/p&gt;
+
+    &lt;picture class=&quot;&quot;&gt;
+             &lt;source srcset=&quot;assets/oci-monitoring-api-key.png 1x&quot; /&gt;
+             &lt;img loading=&quot;lazy&quot; src=&quot;assets/oci-monitoring-api-key.png&quot; data-original=&quot;assets/oci-monitoring-api-key.png&quot; data-at2x=&quot;assets/oci-monitoring-api-key@2x.png&quot; alt=&quot;OCI API Key 01&quot; title=&quot;OCI API Key 01&quot; /&gt;
+         &lt;/picture&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Download the created private key in PEM format&lt;/p&gt;
+
+    &lt;picture class=&quot;&quot;&gt;
+             &lt;source srcset=&quot;assets/oci-monitoring-add-api-key.png 1x&quot; /&gt;
+             &lt;img loading=&quot;lazy&quot; src=&quot;assets/oci-monitoring-add-api-key.png&quot; data-original=&quot;assets/oci-monitoring-add-api-key.png&quot; data-at2x=&quot;assets/oci-monitoring-add-api-key@2x.png&quot; alt=&quot;OCI API Key 02&quot; title=&quot;OCI API Key 02&quot; /&gt;
+         &lt;/picture&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Copy the configuration file preview. The values are used for the Steampipe OCI configuration&lt;/p&gt;
+
+    &lt;picture class=&quot;&quot;&gt;
+             &lt;source srcset=&quot;assets/oci-monitoring-config-file-prev.png 1x&quot; /&gt;
+             &lt;img loading=&quot;lazy&quot; src=&quot;assets/oci-monitoring-config-file-prev.png&quot; data-original=&quot;assets/oci-monitoring-config-file-prev.png&quot; data-at2x=&quot;assets/oci-monitoring-config-file-prev@2x.png&quot; alt=&quot;OCI API Key 03&quot; title=&quot;OCI API Key 03&quot; /&gt;
+         &lt;/picture&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;steampipe&quot;&gt;Steampipe&lt;/h2&gt;
+
+&lt;h3 id=&quot;oci-regions&quot;&gt;OCI Regions&lt;/h3&gt;
+
+&lt;p&gt;To filter your regions, just edit the file &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/home/steampipe/config/oci.spc&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;For example:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;connection &quot;oci_tenant_kestenholz&quot; {
+  plugin                = &quot;oci&quot;
+  config_file_profile   = &quot;DEFAULT&quot;          # Name of the profile
+  config_path           = &quot;~/.oci/config&quot;    # Path to config file
+  regions               = [&quot;eu-frankfurt-1&quot; , &quot;eu-zurich-1&quot;] # List of regions
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Here are some commands to verify if Steampipe is working as expected. Execute as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;root&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;docker &lt;span class=&quot;nb&quot;&gt;exec&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-it&lt;/span&gt; steampipe steampipe plugin list
+&lt;span class=&quot;go&quot;&gt;+--------------------------------------------+---------+-----------------------+
+| Name                                       | Version | Connections           |
++--------------------------------------------+---------+-----------------------+
+| hub.steampipe.io/plugins/turbot/oci@latest | 0.1.0   | oci_tenant_kestenholz |
++--------------------------------------------+---------+-----------------------+
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;docker &lt;span class=&quot;nb&quot;&gt;exec&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-it&lt;/span&gt; steampipe steampipe &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+query &lt;span class=&quot;s2&quot;&gt;&quot;select display_name,shape,region from oci_core_instance where lifecycle_state='RUNNING';&quot;&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;+-----------------------------------+------------------------+----------------+
+| display_name                      | shape                  | region         |
++-----------------------------------+------------------------+----------------+
+| Instance-DB-1                     | VM.Standard1.2         | eu-frankfurt-1 |
+| Instance-AS-1                     | VM.Standard1.1         | eu-frankfurt-1 |
++-----------------------------------+------------------------+----------------+
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;docker &lt;span class=&quot;nb&quot;&gt;exec&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-it&lt;/span&gt; steampipe steampipe &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+query &lt;span class=&quot;s2&quot;&gt;&quot;select key,title,status from oci_region where is_home_region=true;&quot;&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;+-----+----------------+--------+
+| key | title          | status |
++-----+----------------+--------+
+| FRA | eu-frankfurt-1 | READY  |
++-----+----------------+--------+
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;python-example-scripts&quot;&gt;Python Example Scripts&lt;/h2&gt;
+
+&lt;p&gt;In the subdirectory &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/home/steampipe/py&lt;/code&gt;, there are two basic examples of how to get the data from the Steampipe PostgreSQL service to Python3. Feel free to adapt the queries and files. Returned values are pushed to the Prometheus Gateway on port 9091 for further usage.&lt;/p&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Script&lt;/th&gt;
+      &lt;th&gt;Purpose&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;pgsql-query-bv-zurich.py&lt;/td&gt;
+      &lt;td&gt;Summary of Block Volume in OCI Region Zurich&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;pgsql-query-ci-running-zurich.py&lt;/td&gt;
+      &lt;td&gt;Summary of running Instances in OCI Region Zurich&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;blockquote class=&quot;alert&quot;&gt;
+  &lt;p&gt;Note: You’ll need to restart the Docker container before executing Python3 according this error. This is something I’m working on!&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Manual execution and upload of the query result:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;python3 pgsql-query-ci-running-zurich.py
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;python3 pgsql-query-bv-zurich.py
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;go&quot;&gt;Something went wrong: no connection config loaded for connection 'oci'
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Restarting Steampipe as &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;root&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;docker stop steampipe
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;docker start steampipe
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;prometheus-push-gateway&quot;&gt;Prometheus Push Gateway&lt;/h2&gt;
+
+&lt;p&gt;According to the Python script, new data is loaded in Prometheus Push Gateway to port 9091 and scraped by Prometheus port 9090.&lt;/p&gt;
+
+&lt;p&gt;Checkout this example for the Protheus Gateway where data is loaded by jobs &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;oci_blockvolume_ / _oci_compute&lt;/code&gt;.&lt;/p&gt;
+
+&lt;picture class=&quot;&quot;&gt;
+                &lt;source srcset=&quot;assets/oci-monitoring-pushgateway.png 1x&quot; /&gt;
+                &lt;img loading=&quot;lazy&quot; src=&quot;assets/oci-monitoring-pushgateway.png&quot; data-original=&quot;assets/oci-monitoring-pushgateway.png&quot; data-at2x=&quot;assets/oci-monitoring-pushgateway@2x.png&quot; alt=&quot;OCI Prometheus Push Gateway 01&quot; title=&quot;OCI Prometheus Push Gateway 01&quot; /&gt;
+            &lt;/picture&gt;
+
+&lt;h2 id=&quot;grafana&quot;&gt;Grafana&lt;/h2&gt;
+
+&lt;p&gt;Grafana is reachable by address &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;your-machine-ip:3000&lt;/code&gt;.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Username: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;admin&lt;/code&gt;&lt;/li&gt;
+  &lt;li&gt;Password: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;welcome1&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The Prometheus data source and a basic dashboard are deployed during the Grafana Docker setup process. Here’s an example for dasboard &lt;strong&gt;OCI Demo - eu-zurich-1&lt;/strong&gt;:&lt;/p&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/oci-monitoring-grafana.png 1x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/oci-monitoring-grafana.png&quot; data-original=&quot;assets/oci-monitoring-grafana.png&quot; data-at2x=&quot;assets/oci-monitoring-grafana@2x.png&quot; title=&quot;Prometheus data source&quot; alt=&quot;Prometheus data source&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Prometheus data source&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;figure class=&quot;&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/oci-monitoring-grafana-demo.png 1x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; src=&quot;assets/oci-monitoring-grafana-demo.png&quot; data-original=&quot;assets/oci-monitoring-grafana-demo.png&quot; data-at2x=&quot;assets/oci-monitoring-grafana-demo@2x.png&quot; title=&quot;Sample dashboard OCI Demo&quot; alt=&quot;Sample dashboard OCI Demo&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Sample dashboard OCI Demo&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;Here you can see the pushed metric from the Python script by name:&lt;/p&gt;
+
+&lt;picture class=&quot;&quot;&gt;
+                &lt;source srcset=&quot;assets/oci-monitoring-grafana-metrics-browser.png 1x&quot; /&gt;
+                &lt;img loading=&quot;lazy&quot; src=&quot;assets/oci-monitoring-grafana-metrics-browser.png&quot; data-original=&quot;assets/oci-monitoring-grafana-metrics-browser.png&quot; data-at2x=&quot;assets/oci-monitoring-grafana-metrics-browser@2x.png&quot; alt=&quot;Metric from Python script&quot; title=&quot;Metric from Python script&quot; /&gt;
+            &lt;/picture&gt;
+
+&lt;h2 id=&quot;troubleshooting&quot;&gt;Troubleshooting&lt;/h2&gt;
+
+&lt;h3 id=&quot;docker-logs&quot;&gt;Docker Logs&lt;/h3&gt;
+
+&lt;p&gt;To verify that Steampipe is running properly:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;docker logs steampipe
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;steampipe-access-logs&quot;&gt;Steampipe Access Logs&lt;/h3&gt;
+
+&lt;p&gt;The foreign data wrapper logs are stored locally — not in the Docker container — in the directory &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/home/steampipe/logs&lt;/code&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;go&quot;&gt;drwx------. 11 steampipe steampipe     173 Aug  9 17:18 ..
+-rw-------.  1      9193 root       756701 Aug  9 19:57 database-2021-08-09.log
+drwxrwxr-x.  2 steampipe root           68 Aug 10 02:00 .
+-rw-------.  1      9193 root      3411203 Aug 10 07:19 database-2021-08-10.log
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</content><author><name>Martin Berger</name></author><category term="modernize" /><category term="ansible" /><category term="data-visualization" /><category term="data-management" /></entry><entry><title type="html">Deploying Verrazzano on Oracle Container Engine for Kubernetes (OKE)</title><link href="https://cool.devo.build/tutorials/deploying-verrazzano-on-oke" rel="alternate" type="text/html" title="Deploying Verrazzano on Oracle Container Engine for Kubernetes (OKE)" /><published>2021-11-12T09:11:00+00:00</published><updated>2021-11-12T09:11:00+00:00</updated><id>https://cool.devo.build/</id><content type="html" xml:base="https://cool.devo.build/tutorials/deploying-verrazzano-on-oke">&lt;picture class=&quot;alignright&quot;&gt;
+                &lt;source srcset=&quot;assets/verrazzano-logo.png 1x&quot; /&gt;
+                &lt;img loading=&quot;lazy&quot; width=&quot;400&quot; height=&quot;400&quot; src=&quot;assets/verrazzano-logo.png&quot; data-original=&quot;assets/verrazzano-logo.png&quot; data-at2x=&quot;assets/verrazzano-logo@2x.png&quot; alt=&quot;Verrazzano Logo&quot; title=&quot;Verrazzano Logo&quot; /&gt;
+            &lt;/picture&gt;
+
+&lt;p&gt;Oracle recently released &lt;a href=&quot;https://verrazzano.io/&quot;&gt;Verrazzano&lt;/a&gt;, an “end-to-end container platform to deploy cloud native and traditional applications in multi-cloud and hybrid environments.” If that’s a lot to take in, it’s because Verrazzano, (v8o for short) packs a lot. In this post, we will explore deploying Verrazzano on &lt;a href=&quot;https://docs.oracle.com/en-us/iaas/Content/ContEng/home.htm#top&quot;&gt;OKE (Oracle Container Engine)&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The single cluster deployment model is easy:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Create a Kubernetes cluster&lt;/li&gt;
+  &lt;li&gt;Install the Verrazzano platform operator&lt;/li&gt;
+  &lt;li&gt;Install Verrazzano&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;After this, you can deploy your application of choice.&lt;/p&gt;
+
+&lt;h2 id=&quot;creating-the-oke-cluster&quot;&gt;Creating the OKE cluster&lt;/h2&gt;
+&lt;p&gt;We will start by creating the OKE cluster using &lt;a href=&quot;https://github.com/oracle-terraform-modules/terraform-oci-oke&quot;&gt;Terraform OKE module&lt;/a&gt;. Since we are only taking Verrazzano for a spin, we only need the bare minimum features. Follow the &lt;a href=&quot;https://github.com/oracle-terraform-modules/terraform-oci-oke/blob/main/docs/quickstart.adoc&quot;&gt;quickstart&lt;/a&gt; guide, create the providers and create a copy of the terraform.tfvars.example and rename the copy to terraform.tfvars. Ensure the following features/resources are enabled/created:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;create_bastion_host = true
+bastion_access = [&quot;anywhere&quot;]
+create_operator                    = true
+enable_operator_instance_principal = true
+node_pools = {
+  np1 = { shape = &quot;VM.Standard.E4.Flex&quot;, ocpus = 2, memory = 32, node_pool_size = 2, boot_volume_size = 150}
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Follow the rest of the quickstart to run terraform init and apply.&lt;/p&gt;
+
+&lt;p&gt;Once the cluster is created, use the convenient output to copy the command to ssh to the operator host:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ssh_to_operator = &quot;ssh -i ~/.ssh/id_rsa -J opc@xyz.xyz.xyz.xyz opc@10.0.0.12&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;From here onwards, all kubectl commands are executed on the operator host.&lt;/p&gt;
+
+&lt;h2 id=&quot;installing-the-verrazzano-operator&quot;&gt;Installing the Verrazzano operator&lt;/h2&gt;
+
+&lt;p&gt;Let’s first install the Verrazzano operator:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ kubectl apply -f https://github.com/verrazzano/verrazzano/releases/download/v1.0.1/operator.yaml
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;and wait for the deployment to complete:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ kubectl -n verrazzano-install rollout status deployment/verrazzano-platform-operator
+Waiting for deployment “verrazzano-platform-operator” rollout to finish: 0 of 1 updated replicas are available…
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Give it a couple of minutes and the operator should have deployed by then. Verify that the operator is running:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ kubectl -n verrazzano-install get pods
+NAME                                            READY   STATUS    RESTARTS   AGE
+verrazzano-platform-operator-5f788568fd-w8cz7   1/1     Running   0          80s
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;installing-verrazzano&quot;&gt;Installing Verrazzano&lt;/h2&gt;
+
+&lt;p&gt;We can now install Verrazzano. We will use the dev profile for this exercise:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;kubectl apply -f - &amp;lt;&amp;lt;EOF
+apiVersion: install.verrazzano.io/v1alpha1
+kind: Verrazzano
+metadata:
+  name: hello-verrazzano
+spec:
+  profile: dev
+EOF
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We need to wait for Verrazzano to install:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;kubectl wait \
+    --timeout=20m \
+    --for=condition=InstallComplete \
+    verrazzano/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;accessing-verrazzano&quot;&gt;Accessing Verrazzano&lt;/h2&gt;
+
+&lt;p&gt;In order to access Verrazzano, you need to get the console URL:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ kubectl get vz -o yaml
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;You will get a list of URLs printed. For example, my Verrazzano console URL is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;https://verrazzano.default.168.138.102.88.nip.io&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Access this url in your browser and you will be prompted to login:&lt;/p&gt;
+
+&lt;picture class=&quot;aligncenter&quot;&gt;
+                &lt;source srcset=&quot;assets/verrazzano-login.png 1x&quot; /&gt;
+                &lt;img loading=&quot;lazy&quot; width=&quot;1024&quot; height=&quot;557&quot; src=&quot;assets/verrazzano-login.png&quot; data-original=&quot;assets/verrazzano-login.png&quot; data-at2x=&quot;assets/verrazzano-login@2x.png&quot; alt=&quot;Verrazzano Login Screen&quot; title=&quot;Verrazzano Login Screen&quot; /&gt;
+            &lt;/picture&gt;
+
+&lt;p&gt;The username is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;verrazzano&lt;/code&gt; and you can obtain the password by issuing the following command:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;kubectl get secret \
+    --namespace verrazzano-system verrazzano \
+    -o jsonpath={.data.password} | base64 \
+    --decode; echo
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;You should now be able to access the Verrazzano console:&lt;/p&gt;
+
+&lt;picture class=&quot;aligncenter&quot;&gt;
+                &lt;source srcset=&quot;assets/verrazzano-console.png 1x&quot; /&gt;
+                &lt;img loading=&quot;lazy&quot; width=&quot;1024&quot; height=&quot;557&quot; src=&quot;assets/verrazzano-console.png&quot; data-original=&quot;assets/verrazzano-console.png&quot; data-at2x=&quot;assets/verrazzano-console@2x.png&quot; alt=&quot;Verrazzano Console&quot; title=&quot;Verrazzano Console&quot; /&gt;
+            &lt;/picture&gt;
+
+&lt;h3 id=&quot;deploy-an-application-to-verrazzano&quot;&gt;Deploy an application to Verrazzano&lt;/h3&gt;
+
+&lt;p&gt;We will deploy the hello-helidon application. First, create a namespace:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;kubectl create namespace hello-helidon
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;and add labels to identify the namespace as managed by Verrazzano and enabled for Istio:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;kubectl label namespace hello-helidon verrazzano-managed=true istio-injection=enabled
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Next, deploy the Verrazzano &lt;a href=&quot;https://verrazzano.io/docs/applications/#components&quot;&gt;component&lt;/a&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;kubectl apply -f https://raw.githubusercontent.com/verrazzano/verrazzano/master/examples/hello-helidon/hello-helidon-comp.yaml
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Then create the &lt;a href=&quot;https://verrazzano.io/docs/applications/#application-configurations&quot;&gt;Application Configuration&lt;/a&gt;:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;kubectl apply -f https://raw.githubusercontent.com/verrazzano/verrazzano/master/examples/hello-helidon/hello-helidon-app.yaml
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;You can now get the name of your pod:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ kubectl get pods -n hello-helidon
+NAME                                        READY   STATUS    RESTARTS   AGEhello-helidon-deployment-54979d7d74-6c9nw   1/1     Running   0          2m18s
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;And check if the application is ready:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ kubectl wait — timeout=300s — for=condition=Ready -n hello-helidon pod/hello-helidon-deployment-54979d7d74–6c9nw
+pod/hello-helidon-deployment-54979d7d74-6c9nw condition met
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Lookup the hostname of the load balancer:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;HOST=$(kubectl get gateway hello-helidon-hello-helidon-appconf-gw \
+    -n hello-helidon \
+    -o jsonpath='{.spec.servers[0].hosts[0]}')
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;You can then test the application:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ curl -sk \
+    -X GET \
+    &quot;https://${HOST}/greet&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This should return you the following:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;{&quot;message&quot;:&quot;Hello World!&quot;}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;observability&quot;&gt;Observability&lt;/h2&gt;
+
+&lt;p&gt;Now, that we’ve got our application running and accessible, we want to also look at its logs and metrics. Verrazzano has got you covered in the form of the ELK stack for logging and the combination of Prometheus and Grafana for metrics and performance monitoring.&lt;/p&gt;
+
+&lt;p&gt;Let’s look at Grafana first. On the main page of the Verrazzano console, you will see a link to Grafana. You can use the same combination of username and password you used to log into Grafana. Once logged in, click on “Home” and select the “Helidon Monitoring Dashboard”:&lt;/p&gt;
+
+&lt;picture class=&quot;aligncenter&quot;&gt;
+                &lt;source srcset=&quot;assets/verrazzano-grafana.png 1x&quot; /&gt;
+                &lt;img loading=&quot;lazy&quot; width=&quot;1024&quot; height=&quot;557&quot; src=&quot;assets/verrazzano-grafana.png&quot; data-original=&quot;assets/verrazzano-grafana.png&quot; data-at2x=&quot;assets/verrazzano-grafana@2x.png&quot; alt=&quot;Grafana&quot; title=&quot;Grafana&quot; /&gt;
+            &lt;/picture&gt;
+
+&lt;p&gt;Similarly, access the Kibana dashboard and click on Visualize icon in the left menu. You will be prompted to create an index pattern. Select the verrazzano* and follow the wizard to add the index pattern. Search for hello-helidon and you should be able to see the following:&lt;/p&gt;
+
+&lt;picture class=&quot;aligncenter&quot;&gt;
+                &lt;source srcset=&quot;assets/verrazzano-kibana.png 1x&quot; /&gt;
+                &lt;img loading=&quot;lazy&quot; width=&quot;1024&quot; height=&quot;557&quot; src=&quot;assets/verrazzano-kibana.png&quot; data-original=&quot;assets/verrazzano-kibana.png&quot; data-at2x=&quot;assets/verrazzano-kibana@2x.png&quot; alt=&quot;Kibana&quot; title=&quot;Kibana&quot; /&gt;
+            &lt;/picture&gt;
+
+&lt;p&gt;From here, you can create your own visualizations and dashboards.&lt;/p&gt;
+
+&lt;p&gt;What if we want to peek at the Kubernetes cluster itself? Again, Verrazzano has got you covered. From the Verrazzano console, locate the link to Rancher and click on it. The default username is “admin” and you can retrieve the password as follows:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;kubectl get secret \
+    --namespace cattle-system rancher-admin-secret \
+    -o jsonpath={.data.password} | base64 \
+    --decode; echo
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Once logged in, you will land on the cluster page and you will see an Explorer button. Click on it and you will be able to view your Kubernetes cluster:&lt;/p&gt;
+
+&lt;picture class=&quot;aligncenter&quot;&gt;
+                &lt;source srcset=&quot;assets/verrazzano-rancher.png 1x&quot; /&gt;
+                &lt;img loading=&quot;lazy&quot; width=&quot;1024&quot; height=&quot;557&quot; src=&quot;assets/verrazzano-rancher.png&quot; data-original=&quot;assets/verrazzano-rancher.png&quot; data-at2x=&quot;assets/verrazzano-rancher@2x.png&quot; alt=&quot;Rancher&quot; title=&quot;Rancher&quot; /&gt;
+            &lt;/picture&gt;
+
+&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
+
+&lt;p&gt;Verrazzano packs a nice set of capabilities that helps you with the operational side of of Kubernetes. From monitoring to logging and security, there is a lot productivity that a Kubernetes or an application administrator can gain.&lt;/p&gt;
+
+&lt;p&gt;I hope you find this article helpful. In future, we will explore other features of Verrazzano, including multi-cluster deployment and network security among others.&lt;/p&gt;</content><author><name>Ali Mukadam</name></author><category term="cloudapps" /><category term="opensource" /><category term="open-source" /><category term="oke" /><category term="kubernetes" /><category term="terraform" /><category term="devops" /></entry><entry><title type="html">Creating flexible OCI Load Balancers with OKE</title><link href="https://cool.devo.build/tutorials/flexible-load-balancers-oke" rel="alternate" type="text/html" title="Creating flexible OCI Load Balancers with OKE" /><published>2021-11-02T16:17:00+00:00</published><updated>2021-11-02T16:17:00+00:00</updated><id>https://cool.devo.build/</id><content type="html" xml:base="https://cool.devo.build/tutorials/flexible-load-balancers-oke">&lt;p&gt;Until recently, the OCI Load Balancer shapes were fairly restricted to a handful of options:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;100 Mbps&lt;/li&gt;
+  &lt;li&gt;400 Mbps&lt;/li&gt;
+  &lt;li&gt;8000 Mbps&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;What’s more, if you had to change the shape, that would involve recreating the load balancer.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Not anymore.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;A few more options have been created for new load balancer shapes:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;10 Mbps-Micro&lt;/li&gt;
+  &lt;li&gt;10 Mbps&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blogs.oracle.com/cloud-infrastructure/post/announcing-oracle-cloud-infrastructure-flexible-load-balancing&quot;&gt;Flexible&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Now, &lt;a href=&quot;https://blogs.oracle.com/cloud-infrastructure/introducing-dynamic-update-of-load-balancer-shapes&quot;&gt;load balancer&lt;/a&gt; shapes are updatable without having to destroy and recreate them.&lt;/p&gt;
+
+&lt;p&gt;So let’s see how we can create them with OKE.&lt;/p&gt;
+
+&lt;h2 id=&quot;creating-load-balancer-shapes&quot;&gt;Creating Load Balancer Shapes&lt;/h2&gt;
+&lt;p&gt;First, let’s see what load balancer shapes are available in our tenancy.&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;oci lb shape list &lt;span class=&quot;nt&quot;&gt;--compartment-id&lt;/span&gt; ocid1.compartment.oc1..   
+&lt;span class=&quot;go&quot;&gt; &quot;data&quot;: [                                                                                                                                                                                   
+    {                                                                                                                                                                                         
+      &quot;name&quot;: &quot;100Mbps&quot;                                                                                                                                                                       
+    },                                                                                                                                                                                 
+    {                                                                                                                                                                                         
+      &quot;name&quot;: &quot;10Mbps&quot;                                                                                                                                                                        
+    },                                                                                                                                                                                   
+    {                                                                                                                                                                                         
+      &quot;name&quot;: &quot;10Mbps-Micro&quot;                                                                                                                                                                  
+    },                                                                                                                                                                                       
+    {                                                                                                                                                                                         
+      &quot;name&quot;: &quot;400Mbps&quot;                                                                                                                                                                       
+    },                                                                                                                                                                                        
+    {                                                                                                                                                                                         
+      &quot;name&quot;: &quot;8000Mbps&quot;                                                                                                                                                                      
+    } ,                                                                                                                                                                                        
+    {                                                                                                                                                                                         
+      &quot;name&quot;: &quot;flexible&quot;                                                                                                                                                                      
+    }                                                                                                                                                                                         
+  ]
+}
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;As you can see, all the shapes are available. I could use a simple service to have the load balancer created but I want to show that these work equally well with ingress controllers, so let’s use the NGINX Ingress Controller to create one.&lt;/p&gt;
+
+&lt;h3 id=&quot;creating-and-updating-a-load-blanacer-with-an-ingress-controller&quot;&gt;Creating and Updating a Load Blanacer with an Ingress Controller&lt;/h3&gt;
+&lt;p&gt;Let’s first add an ingress controller:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;helm repo update
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;helm &lt;span class=&quot;nb&quot;&gt;install &lt;/span&gt;nginx ingress-nginx/ingress-nginx
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;By default, this will create a load balancer with a of shape 100 Mbps:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;oci lb load-balancer get &lt;span class=&quot;nt&quot;&gt;--load-balancer-id&lt;/span&gt; ocid1.loadbalancer....&lt;span class=&quot;s2&quot;&gt;&quot;shape-name&quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&quot;100Mbps&quot;&lt;/span&gt;,...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Let’s say we want to change the shape to 400 Mbps. We can do this with a load balancer annotation and a helm upgrade:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;helm upgrade nginx ingress-nginx/ingress-nginx &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;--set&lt;/span&gt; controller.service.annotations.&lt;span class=&quot;s2&quot;&gt;&quot;service&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;beta&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;kubernetes&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;io/oci-load-balancer-shape&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;400Mbps&quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;If you want to avoid the horrible escapes and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;\&lt;/code&gt;, use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;values.yaml&lt;/code&gt; file provided by the chart. All you would need to do is traverse to the annotations section and add the following:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;service.beta.kubernetes.io/oci-load-balancer-shape: &lt;span class=&quot;s2&quot;&gt;&quot;400Mbps&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;After the upgrade is done, we can check on the shape again as before. We can see it’s now been upgraded to 400 Mbps:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;...
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;shape-name&quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&quot;400Mbps&quot;&lt;/span&gt;,
+&lt;span class=&quot;c&quot;&gt;...
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now, let’s say we want to create one with the flexible shape and want to take the opportunity to set the bandwidth limits. We can do this passing the following annotations:&lt;/p&gt;
+
+&lt;p&gt;When we check on the shape, we see the following:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;helm upgrade nginx ingress-nginx/ingress-nginx &lt;span class=&quot;nt&quot;&gt;--set&lt;/span&gt; 
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;controller.service.annotations.&lt;span class=&quot;s2&quot;&gt;&quot;service&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;beta&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;kubernetes&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;io/oci-load-balancer-shape&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;flexible&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--set&lt;/span&gt; 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;We can also dynamically change the bandwidth:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;helm upgrade nginx ingress-nginx/ingress-nginx &lt;span class=&quot;nt&quot;&gt;--set&lt;/span&gt; controller.service.annotations.&lt;span class=&quot;s2&quot;&gt;&quot;service&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;beta&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;kubernetes&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;io/oci-load-balancer-shape&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;flexible&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;--set&lt;/span&gt; controller.service.annotations.&lt;span class=&quot;s2&quot;&gt;&quot;service&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;beta&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;kubernetes&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;io/ 
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;oci-load-balancer-shape-flex-min&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;10 &lt;span class=&quot;nt&quot;&gt;--set&lt;/span&gt; controller.service.annotations.&lt;span class=&quot;s2&quot;&gt;&quot;service&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;beta&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;kubernetes&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;io/
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;oci-load-balancer-shape-flex-max&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;500      
+&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;shape-name&quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&quot;flexible&quot;&lt;/span&gt;,
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Now when we check the shape, we can see the changes reflected:&lt;/p&gt;
+
+&lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;shape-details&quot;&lt;/span&gt;: &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;                                                                                                                                                                        
+&lt;span class=&quot;go&quot;&gt;      &quot;maximum-bandwidth-in-mbps&quot;: 500,                                                                                                                                                       
+      &quot;minimum-bandwidth-in-mbps&quot;: 10                                                                                                                                                         
+    },                                                                                                                                                                                        
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;shape-name&quot;&lt;/span&gt;: &lt;span class=&quot;s2&quot;&gt;&quot;flexible&quot;&lt;/span&gt;,
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Finally, all the OCI Load Balancer annotations can be found &lt;a href=&quot;https://github.com/oracle/oci-cloud-controller-manager/blob/master/docs/load-balancer-annotations.md&quot;&gt;here&lt;/a&gt;. These annotations allow you to control the behaviour of the load balancers created by OKE.&lt;/p&gt;</content><author><name>Ali Mukadam</name></author><category term="clouddev" /><category term="kubernetes" /></entry><entry><title type="html">More Terraform Resources</title><link href="https://cool.devo.build/tutorials/tf-101/8-resources" rel="alternate" type="text/html" title="More Terraform Resources" /><published>2021-11-01T09:02:00+00:00</published><updated>2021-11-01T09:02:00+00:00</updated><id>https://cool.devo.build/</id><content type="html" xml:base="https://cool.devo.build/tutorials/tf-101/8-resources">&lt;figure class=&quot;aligncenter&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/terraform-101.png 1x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; width=&quot;400&quot; height=&quot;400&quot; src=&quot;assets/terraform-101.png&quot; data-original=&quot;assets/terraform-101.png&quot; data-at2x=&quot;assets/terraform-101@2x.png&quot; title=&quot;Terraform 101&quot; alt=&quot;Terraform 101 Tutorial Series&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Terraform 101&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+&lt;p&gt;I hope that you’ve found this tutorial series helpful and worth your time.  Terraform is powerful and can make managing your cloud environments easy and efficient.  While our time together has been great, we’ve only had time to scratch the surface!&lt;/p&gt;
+
+&lt;p&gt;Before parting ways, there are several resources that I’ve curated with the hope that it’ll help expand your skills and experience around using Terraform with OCI.  Without further ado:&lt;/p&gt;
+
+&lt;h2 id=&quot;terraform-modules&quot;&gt;Terraform Modules&lt;/h2&gt;
+
+&lt;p&gt;We haven’t had a chance to talk about modules, but they’re a great way to extend and scale Terraform.  Here are a few places to look for OCI Terraform modules:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://registry.terraform.io/browse/modules?provider=oci&quot;&gt;HashiCorp Terraform Module Registry&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/oracle-devrel&quot;&gt;github.com/oracle-devrel&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/oracle-terraform-modules/&quot;&gt;github.com/oracle-terraform-modules/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/oracle-quickstart&quot;&gt;github.com/oracle-quickstart&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;terraform-projects&quot;&gt;Terraform Projects&lt;/h2&gt;
+
+&lt;p&gt;There are Terraform projects for many common applications just waiting for you to deploy:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://www.oracle.com/cloud/architecture-center/&quot;&gt;Oracle Architecture Center&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/oracle-devrel&quot;&gt;github.com/oracle-devrel&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/oracle-quickstart&quot;&gt;github.com/oracle-quickstart&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;terraform-documentation&quot;&gt;Terraform Documentation&lt;/h2&gt;
+
+&lt;p&gt;There’s a plethora of great documentation on the &lt;a href=&quot;https://terraform.io&quot;&gt;terraform.io&lt;/a&gt; site.  Be sure to check it out and go through the documentation and learning guides!&lt;/p&gt;
+
+&lt;p&gt;For OCI-specific documentation, check out:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://registry.terraform.io/providers/hashicorp/oci/latest/docs&quot;&gt;OCI Terraform provider&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/terraform.htm&quot;&gt;Official OCI Terraform provider documentation&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Until we meet again, happy coding!&lt;/p&gt;</content><author><name>Tim Clegg</name></author><category term="iac" /><category term="opensource" /><category term="open-source" /><category term="terraform" /><category term="iac" /><category term="devops" /><category term="beginner" /></entry><entry><title type="html">Destroying resources with Terraform</title><link href="https://cool.devo.build/tutorials/tf-101/7-destroying" rel="alternate" type="text/html" title="Destroying resources with Terraform" /><published>2021-11-01T08:02:00+00:00</published><updated>2021-11-01T08:02:00+00:00</updated><id>https://cool.devo.build/</id><content type="html" xml:base="https://cool.devo.build/tutorials/tf-101/7-destroying">&lt;div class=&quot;slides&quot; id=&quot;slideshow&quot;&gt;
+
+  &lt;div class=&quot;slide active&quot; id=&quot;slide-0&quot;&gt;
+
+    &lt;h2 class=&quot;slide__title&quot;&gt;&lt;span class=&quot;slide__num&quot;&gt;1&lt;/span&gt; Introduction&lt;/h2&gt;
+
+    &lt;figure class=&quot;aligncenter&quot;&gt;
+              &lt;picture&gt;
+                  &lt;source srcset=&quot;assets/terraform-101.png 1x&quot; /&gt;
+                  &lt;img loading=&quot;lazy&quot; width=&quot;400&quot; height=&quot;400&quot; src=&quot;assets/terraform-101.png&quot; data-original=&quot;assets/terraform-101.png&quot; data-at2x=&quot;assets/terraform-101@2x.png&quot; title=&quot;Terraform 101&quot; alt=&quot;Terraform 101 Tutorial Series&quot; /&gt;
+              &lt;/picture&gt;
+              &lt;figcaption&gt;Terraform 101&lt;/figcaption&gt;
+            &lt;/figure&gt;
+
+    &lt;p&gt;So far we’ve had some fun creating and changing OCI resources.  Our tutorial is coming to a close, so it’s time to remove the resources we’ve added and clean-up after ourselves.  Terraform makes this amazingly easy.  Let’s explore this now.&lt;/p&gt;
+
+    &lt;div class=&quot;slide__nav&quot;&gt;&lt;a href=&quot;javascript:cool.slides.goToSlide(1)&quot; class=&quot;slides__btn--begin&quot;&gt;Begin &amp;raquo;&lt;/a&gt;&lt;/div&gt;
+
+  &lt;/div&gt;
+
+  &lt;div class=&quot;slide&quot; id=&quot;slide-1&quot;&gt;
+
+    &lt;h2 class=&quot;slide__title&quot;&gt;&lt;span class=&quot;slide__num&quot;&gt;2&lt;/span&gt; Removing a Resource&lt;/h2&gt;
+
+    &lt;p&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;stage&lt;/code&gt; Subnet will be removed.  To do this, remove its resource definition (the following code snippet) from the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;main.tf&lt;/code&gt; file:&lt;/p&gt;
+
+    &lt;div class=&quot;language-terraform highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;resource&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;oci_core_subnet&quot;&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;stage&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;vcn_id&lt;/span&gt;                      &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;oci_core_vcn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;tf_101&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;id&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;cidr_block&lt;/span&gt;                  &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;172.16.2.0/24&quot;&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;compartment_id&lt;/span&gt;              &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&amp;lt;your_compartment_OCID_here&amp;gt;&quot;&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;display_name&lt;/span&gt;                &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Staging subnet&quot;&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;prohibit_public_ip_on_vnic&lt;/span&gt;  &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;
+  &lt;span class=&quot;nx&quot;&gt;dns_label&lt;/span&gt;                   &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;stage&quot;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;p&gt;Look at the Terraform plan to make sure it’s correct:&lt;/p&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;terraform plan
+&lt;span class=&quot;gp&quot;&gt;oci_core_subnet.stage: Refreshing state... [id=ocid1.subnet.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;oci_core_vcn.tf101: Refreshing state... [id=ocid1.vcn.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;oci_core_subnet.test: Refreshing state... [id=ocid1.subnet.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;oci_core_subnet.dev: Refreshing state... [id=ocid1.subnet.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;  #&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;oci_core_subnet.stage will be destroyed
+&lt;span class=&quot;go&quot;&gt;  - resource &quot;oci_core_subnet&quot; &quot;stage&quot; {
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - cidr_block                 = &quot;172.16.2.0/24&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - compartment_id             = &quot;ocid1.compartment.oc1..&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot; -&amp;gt; null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - defined_tags               = {} -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - dhcp_options_id            = &quot;ocid1.dhcpoptions.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; -&amp;gt; null
+&lt;span class=&quot;gp&quot;&gt;      - display_name               = &quot;Staging subnet&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - dns_label                  = &quot;stage&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - freeform_tags              = {} -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - id                         = &quot;ocid1.subnet.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot; -&amp;gt; null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - prohibit_public_ip_on_vnic = true -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - route_table_id             = &quot;ocid1.routetable.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; -&amp;gt; null
+&lt;span class=&quot;go&quot;&gt;      - security_list_ids          = [
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;          - &quot;ocid1.securitylist.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;,
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;        ] -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - state                      = &quot;AVAILABLE&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - subnet_domain_name         = &quot;stage.example.oraclevcn.com&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - time_created               = &quot;2021-02-09 20:22:37.634 +0000 UTC&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - vcn_id                     = &quot;ocid1.vcn.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; -&amp;gt; null
+&lt;span class=&quot;gp&quot;&gt;      - virtual_router_ip          = &quot;172.16.2.1&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - virtual_router_mac         = &quot;00:11:...:22:33&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;go&quot;&gt;    }
+
+Plan: 0 to add, 0 to change, 1 to destroy.
+
+------------------------------------------------------------------------
+
+Note: You didn't specify an &quot;-out&quot; parameter to save this plan, so Terraform
+can't guarantee that exactly these actions will be performed if
+&quot;terraform apply&quot; is subsequently run.
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;blockquote class=&quot;notice&quot;&gt;
+      &lt;p&gt;&lt;strong&gt;NOTE:&lt;/strong&gt; It might feel redundant to keep looking at the output from &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform plan&lt;/code&gt; when the same output is given when you run &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform apply&lt;/code&gt; (before telling it to continue).  It’s a good habit to always review proposed changes &lt;em&gt;before&lt;/em&gt; making them.  By running plan and then apply, it forces you to closely look at what’s going to happen to the environment (before it happens), giving you valuable time to stop or change what’s going to take place.&lt;/p&gt;
+    &lt;/blockquote&gt;
+
+    &lt;p&gt;The minus sign (&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-&lt;/code&gt;) in front of the oci_core_subnet.stage is how Terraform indicates it will be removing the resource from the environment (“terminated” in OCI speak).  Proceed with applying it:&lt;/p&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;terraform apply
+&lt;span class=&quot;go&quot;&gt;
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;...
+&lt;span class=&quot;go&quot;&gt;
+Plan: 0 to add, 0 to change, 1 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;oci_core_subnet.stage: Destroying... [id=ocid1.subnet.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;oci_core_subnet.stage: Destruction complete after 4s
+
+Apply complete! Resources: 0 added, 0 changed, 1 destroyed.
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;p&gt;With the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;stage&lt;/code&gt; Subnet removed, the environment is a bit cleaner.&lt;/p&gt;
+
+    &lt;h3 id=&quot;deleting-and-re-creating-a-resource&quot;&gt;Deleting and Re-creating a Resource&lt;/h3&gt;
+
+    &lt;p&gt;We chose to permanently delete the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;stage&lt;/code&gt; Subnet.  In situations where a single resource should be destroyed and then re-created, there are a couple of options (rather than modify the Terraform code):&lt;/p&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform destroy&lt;/code&gt; command&lt;/li&gt;
+      &lt;li&gt;Taint a resource&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;p&gt;The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform destroy -target=type.name&lt;/code&gt; command is handy.  Instead of deleting the stage Subnet in your code and running &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform apply&lt;/code&gt;, you could have run &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform destroy -target=oci_core_subnet.stage&lt;/code&gt;.  Of course, if you don’t remove (or comment out) the code for the stage Subnet, the next time you run &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform apply&lt;/code&gt;, it would want to re-create the stage Subnet.&lt;/p&gt;
+
+    &lt;p&gt;When a resource is “tainted,” it will be deleted and re-created.  The command &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform taint type.name&lt;/code&gt; is how a resource is tainted.  Here’s an example of how the staging subnet could’ve been tainted: &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform taint oci_core_subnet.stage&lt;/code&gt; (followed by &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform plan&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform apply&lt;/code&gt;).  The next time Terraform applies, it will delete and re-create the resource.  Look at the &lt;a href=&quot;https://www.terraform.io/docs/cli/commands/taint.html&quot;&gt;Terraform taint command documentation&lt;/a&gt; for more information.&lt;/p&gt;
+
+    &lt;div class=&quot;slide__nav&quot;&gt;&lt;a href=&quot;javascript:cool.slides.goToSlide(0)&quot;&gt;&amp;laquo; Back&lt;/a&gt; &lt;a href=&quot;javascript:cool.slides.goToSlide(2)&quot;&gt;Continue &amp;raquo;&lt;/a&gt;&lt;/div&gt;
+
+  &lt;/div&gt;
+
+  &lt;div class=&quot;slide&quot; id=&quot;slide-2&quot;&gt;
+
+    &lt;h2 class=&quot;slide__title&quot;&gt;&lt;span class=&quot;slide__num&quot;&gt;3&lt;/span&gt; Removing All Resources&lt;/h2&gt;
+
+    &lt;p&gt;When it’s time to fully terminate (destroy) an environment, Terraform has a single command that can accomplish this.&lt;/p&gt;
+
+    &lt;p&gt;While this could be accomplished by removing resource definitions from the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;main.tf&lt;/code&gt; (Terraform code) file, that isn’t ideal.  What if the environment needs to be provisioned in the future?  Keep the Terraform code and use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;terraform destroy&lt;/code&gt; command to clean-up (terminate/destroy) the environment:&lt;/p&gt;
+
+    &lt;div class=&quot;language-console highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;gp&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;terraform destroy
+&lt;span class=&quot;go&quot;&gt;
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;  #&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;oci_core_subnet.dev will be destroyed
+&lt;span class=&quot;go&quot;&gt;  - resource &quot;oci_core_subnet&quot; &quot;dev&quot; {
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - cidr_block                 = &quot;172.16.0.0/24&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - compartment_id             = &quot;ocid1.compartment.oc1..&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot; -&amp;gt; null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - defined_tags               = {} -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - dhcp_options_id            = &quot;ocid1.dhcpoptions.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; -&amp;gt; null
+&lt;span class=&quot;gp&quot;&gt;      - display_name               = &quot;Dev subnet&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - dns_label                  = &quot;dev&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - freeform_tags              = {} -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - id                         = &quot;ocid1.subnet.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot; -&amp;gt; null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - prohibit_public_ip_on_vnic = true -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - route_table_id             = &quot;ocid1.routetable.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; -&amp;gt; null
+&lt;span class=&quot;go&quot;&gt;      - security_list_ids          = [
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;          - &quot;ocid1.securitylist.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;,
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;        ] -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - state                      = &quot;AVAILABLE&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - subnet_domain_name         = &quot;dev.example.oraclevcn.com&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - time_created               = &quot;2021-02-09 20:22:38.422 +0000 UTC&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - vcn_id                     = &quot;ocid1.vcn.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; -&amp;gt; null
+&lt;span class=&quot;gp&quot;&gt;      - virtual_router_ip          = &quot;172.16.0.1&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - virtual_router_mac         = &quot;00:11:...:22:33&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;go&quot;&gt;    }
+
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;  #&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;oci_core_subnet.test will be destroyed
+&lt;span class=&quot;go&quot;&gt;  - resource &quot;oci_core_subnet&quot; &quot;test&quot; {
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - cidr_block                 = &quot;172.16.1.0/24&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - compartment_id             = &quot;ocid1.compartment.oc1..&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot; -&amp;gt; null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - defined_tags               = {} -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - dhcp_options_id            = &quot;ocid1.dhcpoptions.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; -&amp;gt; null
+&lt;span class=&quot;gp&quot;&gt;      - display_name               = &quot;Testing subnet&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - dns_label                  = &quot;test&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - freeform_tags              = {} -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - id                         = &quot;ocid1.subnet.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot; -&amp;gt; null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - prohibit_public_ip_on_vnic = true -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - route_table_id             = &quot;ocid1.routetable.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; -&amp;gt; null
+&lt;span class=&quot;go&quot;&gt;      - security_list_ids          = [
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;          - &quot;ocid1.securitylist.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;,
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;        ] -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - state                      = &quot;AVAILABLE&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - subnet_domain_name         = &quot;test.example.oraclevcn.com&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - time_created               = &quot;2021-02-09 20:22:38.097 +0000 UTC&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - vcn_id                     = &quot;ocid1.vcn.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; -&amp;gt; null
+&lt;span class=&quot;gp&quot;&gt;      - virtual_router_ip          = &quot;172.16.1.1&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - virtual_router_mac         = &quot;00:11:...:22:33&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;go&quot;&gt;    }
+
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;  #&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;oci_core_vcn.tf_101 will be destroyed
+&lt;span class=&quot;go&quot;&gt;  - resource &quot;oci_core_vcn&quot; &quot;example&quot; {
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - cidr_block               = &quot;172.16.0.0/20&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;go&quot;&gt;      - cidr_blocks              = [
+          - &quot;172.16.0.0/20&quot;,
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;        ] -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - compartment_id           = &quot;ocid1.compartment.oc1..&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot; -&amp;gt; null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - default_dhcp_options_id  = &quot;ocid1.dhcpoptions.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; -&amp;gt; null
+&lt;span class=&quot;gp&quot;&gt;      - default_route_table_id   = &quot;ocid1.routetable.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot; -&amp;gt; null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - default_security_list_id = &quot;ocid1.securitylist.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt; -&amp;gt; null
+&lt;span class=&quot;gp&quot;&gt;      - defined_tags             = {} -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - display_name             = &quot;tf_101&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - dns_label                = &quot;tf101&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - freeform_tags            = {} -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;null
+&lt;span class=&quot;gp&quot;&gt;      - id                       = &quot;ocid1.vcn.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot; -&amp;gt; null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - state                    = &quot;AVAILABLE&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - time_created             = &quot;2021-02-09 20:20:05.841 +0000 UTC&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;      - vcn_domain_name          = &quot;tf101.oraclevcn.com&quot; -&amp;gt;&lt;/span&gt;&lt;span class=&quot;w&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;null
+&lt;/span&gt;&lt;span class=&quot;go&quot;&gt;    }
+
+Plan: 0 to add, 0 to change, 3 to destroy.
+
+Do you really want to destroy all resources?
+  Terraform will destroy all your managed infrastructure, as shown above.
+  There is no undo. Only 'yes' will be accepted to confirm.
+
+  Enter a value: yes
+
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;oci_core_subnet.test: Destroying... [id=ocid1.subnet.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;gp&quot;&gt;oci_core_subnet.dev: Destroying... [id=ocid1.subnet.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;oci_core_subnet.test: Destruction complete after 3s
+oci_core_subnet.dev: Destruction complete after 4s
+&lt;/span&gt;&lt;span class=&quot;gp&quot;&gt;oci_core_vcn.tf_101: Destroying... [id=ocid1.vcn.oc1.phx.&amp;lt;sanitized&amp;gt;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;go&quot;&gt;oci_core_vcn.tf_101: Destruction complete after 1s
+
+Destroy complete! Resources: 3 destroyed.
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+
+    &lt;p&gt;Much like the apply command, the destroy command alerts you as to what it intends to do, prompting you to authorize it before continuing.&lt;/p&gt;
+
+    &lt;p&gt;Things are now really cleaned up.  The Subnets and VCN is gone.  Speaking of being gone, did you notice how Terraform removed the OCI resources in the order of their dependency?  It didn’t try to remove the VCN first (which would’ve failed because of the presence of the Subnets), but instead destroyed the two Subnets first, then destroyed the VCN.  That’s part of the graph logic that Terraform applies to make managing your environment easy.  Pretty slick, right?&lt;/p&gt;
+
+    &lt;p&gt;We’ve had a great time together, but this tutorial is coming to a close.  Before we part, make sure to check out some of the &lt;a href=&quot;8-resources&quot;&gt;resources offered in the next section&lt;/a&gt;.&lt;/p&gt;
+
+    &lt;div class=&quot;slide__nav&quot;&gt;&lt;a href=&quot;javascript:cool.slides.goToSlide(1)&quot;&gt;&amp;laquo; Back&lt;/a&gt;&lt;/div&gt;
+
+  &lt;/div&gt;
+
+&lt;/div&gt;</content><author><name>Tim Clegg</name></author><category term="iac" /><category term="opensource" /><category term="open-source" /><category term="terraform" /><category term="iac" /><category term="devops" /><category term="beginner" /></entry><entry><title type="html">Polyglot Application Observability</title><link href="https://cool.devo.build/tutorials/polyglot-application-observability" rel="alternate" type="text/html" title="Polyglot Application Observability" /><published>2021-10-31T11:33:00+00:00</published><updated>2021-10-31T11:33:00+00:00</updated><id>https://cool.devo.build/</id><content type="html" xml:base="https://cool.devo.build/tutorials/polyglot-application-observability">&lt;p&gt;Pinpoint (developed by &lt;a href=&quot;https://www.navercorp.com/en&quot;&gt;Naver&lt;/a&gt;, South Korea’s largest web search engine company) is an APM (Application Performance Management) solution used by many organizations around the globe and actively used internally by Naver, where &lt;strong&gt;Pinpoint monitors over 10 billion transactions per day&lt;/strong&gt;. This allows tracing transactions and data flows between multiple software components and identifies problematic areas along with potential bottlenecks.&lt;/p&gt;
+
+&lt;h2 id=&quot;integration&quot;&gt;Integration&lt;/h2&gt;
+
+&lt;p&gt;The Pinpoint team developed a GraalVM agent using the &lt;a href=&quot;https://docs.oracle.com/en/graalvm/enterprise/21/docs/graalvm-as-a-platform/language-implementation-framework/&quot;&gt;Truffle API&lt;/a&gt;. GraalVM provides a faster runtime for applications and access to Truffle APIs to get access to the platform for enhancing interoperability.&lt;/p&gt;
+
+&lt;p&gt;The integration between GraalVM and Pinpoint (visualized below) shows the auto-instrumentation of a polyglot application written in Java and Node.js with a MySQL database backend.&lt;/p&gt;
+
+&lt;p&gt;To start using PinPoint and GraalVM for your applications, clone the following project from GitHub:&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git clone https://github.com/RoySRose/pingraalPrerequisite GraalVM preinstalled.
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h3 id=&quot;create-your-first-node&quot;&gt;Create your first node&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;Create the instrument jar&lt;/p&gt;
+
+    &lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; $ mvn clean install -DskipTests=true2. 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Run server.js&lt;/p&gt;
+
+    &lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; $ node server.js3. 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Run first node.js file:&lt;/p&gt;
+
+    &lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; $ ./simpletool node helloworld.js
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;    &lt;/div&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;After running these commands, you should be able to access the PinPoint dashboard.&lt;/p&gt;
+
+&lt;h2 id=&quot;results&quot;&gt;Results&lt;/h2&gt;
+
+&lt;p&gt;The results are displayed in three steps:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;The integration allows you to collect and visualize performance metrics of your application, such as heap/non-heap memory usage, CPU usage, active threads, response time, and others.&lt;/p&gt;
+
+    &lt;p&gt;&lt;img src=&quot;https://cool.devo.build/tutorials/assets/polyglot-daigram-graalServer1.png&quot; alt=&quot;Diagram featuring Polyglot code interfacing with two Java programs&quot; /&gt;)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;From the Callstack view you can dig deep into distributed call stacks of a particular transaction from multiple servers in one view:&lt;/p&gt;
+
+    &lt;p&gt;&lt;img src=&quot;https://cool.devo.build/tutorials/assets/polyglot-callstack-view.png&quot; alt=&quot;Pinpoint's callstack view&quot; /&gt;)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The inspector collects the following information:&lt;/p&gt;
+    &lt;ul&gt;
+      &lt;li&gt;Heap/Non-Heap Usage&lt;/li&gt;
+      &lt;li&gt;GraalVM/System CPU usage&lt;/li&gt;
+      &lt;li&gt;Transactions per second&lt;/li&gt;
+      &lt;li&gt;Active Threads&lt;/li&gt;
+      &lt;li&gt;Response Time&lt;/li&gt;
+      &lt;li&gt;Open File Descriptors&lt;/li&gt;
+      &lt;li&gt;Direct/Mapped Buffer&lt;/li&gt;
+      &lt;li&gt;Data source&lt;/li&gt;
+    &lt;/ul&gt;
+
+    &lt;p&gt;&lt;img src=&quot;https://cool.devo.build/tutorials/assets/polyglot-pinpoint-dashboard.png&quot; alt=&quot;Pinpoint dashboard displaying collected information&quot; /&gt;)&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;summary&quot;&gt;Summary&lt;/h2&gt;
+
+&lt;p&gt;This collaboration was done thanks to the efforts of the GraalVM Labs Engineering team (led by Thomas Wuerthinger) and also Roy Kim from Naver Labs and his Pinpoint team. The integration between GraalVM and Pinpoint helps us to see and understand the need for Polyglot Application Observability.&lt;/p&gt;</content><author><name>Amitpal Singh Dhillon</name></author><category term="clouddev" /><category term="pinpoint" /><category term="graalvm" /><category term="observability" /></entry></feed>
